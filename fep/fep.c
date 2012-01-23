@@ -48,7 +48,7 @@
 static sigset_t orig_sigmask;
 static sig_atomic_t signals;
 
-static void main_loop (Fep *fep);
+static int main_loop (Fep *fep);
 
 static void *
 find_match_end (const void *haystack, size_t haystacklen,
@@ -247,6 +247,7 @@ fep_run (Fep *fep, const char *command[])
   else
     {
       static struct termios termios;
+      int retval;
 
       tcgetattr (fep->tty_in, &termios);
       cfmakeraw (&termios);
@@ -256,8 +257,8 @@ fep_run (Fep *fep, const char *command[])
       _fep_output_init_screen (fep);
 
       set_signal_handler ();
-      main_loop (fep);
-      done (fep, 0);
+      retval = main_loop (fep);
+      done (fep, retval < 0 ? 1 : 0);
     }
   return 0;
 }
@@ -281,14 +282,14 @@ remove_padding (const char *str)
   return dest;
 }
 
-static void
+static int
 main_loop (Fep *fep)
 {
   char buf[BUFSIZ];
   fd_set fds;
   char *_clear_screen = remove_padding (clear_screen);
   char *_clr_eos = remove_padding (clr_eos);
-  int i;
+  int retval, i;
 
   while (true)
     {
@@ -319,7 +320,11 @@ main_loop (Fep *fep)
 	  memset (buf, 0, sizeof(buf));
 	  bytes_read = _fep_read (fep, buf, sizeof(buf) - 1);
 	  if (bytes_read <= 0)
-	    return;
+	    {
+	      fprintf (stderr, "Can't read from tty in\n");
+	      retval = bytes_read < 0 ? -1 : 0;
+	      break;
+	    }
 	  buf[bytes_read] = '\0';
 
 	  for (i = 0; i < bytes_read; i++)
@@ -369,7 +374,11 @@ main_loop (Fep *fep)
 	  memset (buf, 0, sizeof(buf));
 	  bytes_read = read (fep->pty, buf, sizeof(buf) - 1);
 	  if (bytes_read <= 0)
-	    break;
+	    {
+	      fprintf (stderr, "Can't read from pty\n");
+	      retval = bytes_read < 0 ? -1 : 0;
+	      break;
+	    }
 	  buf[bytes_read] = '\0';
 
 	  str1 = find_match_end (buf,
@@ -409,6 +418,7 @@ main_loop (Fep *fep)
     }
   free (_clear_screen);
   free (_clr_eos);
+  return retval;
 }
 
 void

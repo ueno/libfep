@@ -65,7 +65,7 @@ main (int argc, char **argv)
       switch (c)
 	{
 	case 'e':
-	  command = _fep_strsplit_set (optarg, " \t", -1);
+	  command = _fep_strsplit_set (optarg, " \f\t\n\r\v", -1);
 	  break;
 	case 'h':
 	  usage (stdout, argv[0]);
@@ -85,6 +85,13 @@ main (int argc, char **argv)
     }
 
   fep = fep_new ();
+  if (command == NULL)
+    {
+      static char *shell[2];
+      shell[0] = getenv ("SHELL");
+      shell[1] = NULL;
+      command = shell;
+    }
   if (fep_run (fep, command) < 0)
     {
       fprintf (stderr, "Can't run FEP command\n");

@@ -157,10 +157,7 @@ _fep_output_string (Fep *fep, const char *str)
       size_t len;
 
       if (fep->ptybuf.len > 0)
-	{
-	  free (fep->ptybuf.str);
-	  fep->ptybuf.str = NULL;
-	}
+	_fep_string_clear (&fep->ptybuf);
 
       apply_attr (fep, &fep->attr_tty);
 

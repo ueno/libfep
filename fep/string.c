@@ -52,22 +52,54 @@ _fep_string_clear (FepString *buf)
   buf->len = 0;
 }
 
+static char *
+search_strstr (const char *str, const char *delimiter, const char **next)
+{
+  char *p = strstr (str, delimiter);
+  if (p)
+    *next = p + strlen (delimiter);
+  return p;
+}
+
+static char *
+search_strpbrk (const char *str, const char *delimiter, const char **next)
+{
+  char *p = strpbrk (str, delimiter);
+  if (p)
+    *next = p + strspn (str, delimiter);
+  return p;
+}
+
 static char **
 _fep_strsplit_full (const char *str, const char *delimiter, int max_tokens,
-		    char *(*search) (const char *, const char *))
+		    char *(*search) (const char *, const char *, const char **))
 {
   size_t len = 0;
   const char *p, *q;
-  char **strv, **r;
+  char *next, **strv, **r;
 
-  for (p = search (str, delimiter); p && *p != '\0'; p = search (p, delimiter))
+  p = search (str, delimiter, &next);
+  if (!p && str[0] != '\0')
     len++;
+  else
+    {
+      for (; p && *p != '\0'; p = search (p, delimiter, &next))
+	{
+	  len++;
+	  p = next;
+	}
+    }
 
   strv = calloc (len + 1, sizeof (char *));
-  for (p = str, q = search (p, delimiter), r = strv;
+  for (p = str, q = search (p, delimiter, &next), r = strv;
        q && *q != '\0';
-       p = q, q = search (p, delimiter), r++)
-    *r = strndup (p, q - p);
+       q = search (p, delimiter, &next), r++)
+    {
+      *r = strndup (p, q - p);
+      p = next;
+    }
+  if (p - str < strlen (str))
+    *r = strdup (p);
 
   return strv;
 }
@@ -75,13 +107,13 @@ _fep_strsplit_full (const char *str, const char *delimiter, int max_tokens,
 char **
 _fep_strsplit (const char *str, const char *delimiter, int max_tokens)
 {
-  return _fep_strsplit_full (str, delimiter, max_tokens, strstr);
+  return _fep_strsplit_full (str, delimiter, max_tokens, search_strstr);
 }
 
 char **
 _fep_strsplit_set (const char *str, const char *delimiter, int max_tokens)
 {
-  return _fep_strsplit_full (str, delimiter, max_tokens, strpbrk);
+  return _fep_strsplit_full (str, delimiter, max_tokens, search_strpbrk);
 }
 
 char *
