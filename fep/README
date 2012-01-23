@@ -1,0 +1,20 @@
+The following source files contain derived code from uim (uim/fep/*):
+
+- fep.c
+- input.c
+- key.c
+- output.c
+- sgr.c
+
+Other files listed below are written from scratch:
+
+- cap.c
+- control.c
+- csi.c
+- fep.h
+- main.c
+- private.h
+- string.c
+
+All files are released under 3-Clause BSD license.
+See COPYING.BSD for detail.
