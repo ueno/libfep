@@ -32,7 +32,7 @@ fep_SOURCES =					\
 	$(NULL)
 
 fep_CFLAGS = $(NCURSES_CFLAGS)
-fep_LDADD = $(NCURSES_LIBS) $(PTY_LIB) $(top_builddir)/lib/libgnu.a
+fep_LDADD = $(NCURSES_LIBS) $(PTY_LIB) $(top_builddir)/lib/libgnu.la
 
 EXTRA_DIST = README COPYING.BSD
 

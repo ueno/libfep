@@ -32,15 +32,64 @@
 
 #include "fep.h"
 #include <stdlib.h>
+#include <stdio.h>
+#include <getopt.h>
+
+static void
+usage (FILE *out, const char *program_name)
+{
+  fprintf (out, "Usage: %s OPTIONS...\n", program_name);
+}
 
 int
-main (void)
+main (int argc, char **argv)
 {
   Fep *fep;
-  const char *command[] = { "/bin/sh", NULL };
+  int c;
+  char **command = NULL;
+
+  while (1)
+    {
+      int option_index = 0;
+      static struct option long_options[] =
+	{
+	  { "execute", required_argument, 0, 'e' },
+	  { "help", no_argument, 0, 'h' },
+	  { NULL, 0, 0, 0 }
+	};
+      c = getopt_long (argc, argv, "e:h",
+		       long_options, &option_index);
+      if (c == -1)
+	break;
+
+      switch (c)
+	{
+	case 'e':
+	  command = _fep_strsplit_set (optarg, " \t", -1);
+	  break;
+	case 'h':
+	  usage (stdout, argv[0]);
+	  exit (0);
+	  break;
+	default:
+	  usage (stderr, argv[0]);
+	  exit (1);
+	  break;
+	}
+    }
+
+  if (optind < argc)
+    {
+      usage (stderr, argv[0]);
+      exit (1);
+    }
 
   fep = fep_new ();
-  fep_run (fep, command);
+  if (fep_run (fep, command) < 0)
+    {
+      fprintf (stderr, "Can't run FEP command\n");
+      exit (1);
+    }
   fep_free (fep);
 
   return 0;

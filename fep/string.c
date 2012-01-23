@@ -52,23 +52,36 @@ _fep_string_clear (FepString *buf)
   buf->len = 0;
 }
 
-char **
-_fep_strsplit (const char *str, const char *delimiter, int max_tokens)
+static char **
+_fep_strsplit_full (const char *str, const char *delimiter, int max_tokens,
+		    char *(*search) (const char *, const char *))
 {
   size_t len = 0;
   const char *p, *q;
   char **strv, **r;
 
-  for (p = strstr (str, delimiter); p && *p != '\0'; p = strstr (p, delimiter))
+  for (p = search (str, delimiter); p && *p != '\0'; p = search (p, delimiter))
     len++;
 
   strv = calloc (len + 1, sizeof (char *));
-  for (p = str, q = strstr (p, delimiter), r = strv;
+  for (p = str, q = search (p, delimiter), r = strv;
        q && *q != '\0';
-       p = q, q = strstr (p, delimiter), r++)
+       p = q, q = search (p, delimiter), r++)
     *r = strndup (p, q - p);
 
   return strv;
+}
+
+char **
+_fep_strsplit (const char *str, const char *delimiter, int max_tokens)
+{
+  return _fep_strsplit_full (str, delimiter, max_tokens, strstr);
+}
+
+char **
+_fep_strsplit_set (const char *str, const char *delimiter, int max_tokens)
+{
+  return _fep_strsplit_full (str, delimiter, max_tokens, strpbrk);
 }
 
 char *

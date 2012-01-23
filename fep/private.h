@@ -186,6 +186,9 @@ void             _fep_string_clear         (FepString          *buf);
 char **          _fep_strsplit             (const char         *str,
                                             const char         *delimiter,
                                             int                 max_tokens);
+char **          _fep_strsplit_set         (const char         *str,
+                                            const char         *delimiter,
+                                            int                 max_tokens);
 char *           _fep_strjoinv             (char              **strv,
                                             const char         *delimiter);
 void             _fep_strfreev             (char              **strv);
