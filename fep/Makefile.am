@@ -23,16 +23,22 @@ fep_SOURCES =					\
 	sgr.c					\
 	cap.c					\
 	key.c					\
-	string.c				\
 	input.c					\
 	output.c				\
 	control.c				\
 	fep.c					\
 	main.c					\
+	fep.h					\
+	private.h				\
 	$(NULL)
 
 fep_CFLAGS = $(NCURSES_CFLAGS)
-fep_LDADD = $(NCURSES_LIBS) $(PTY_LIB) $(top_builddir)/lib/libgnu.la
+fep_LDADD =					\
+	$(NCURSES_LIBS)				\
+	$(PTY_LIB)				\
+	$(top_builddir)/lib/libgnu.la		\
+	$(top_builddir)/libfep/libfep.la	\
+	$(NULL)
 
 EXTRA_DIST = README COPYING.BSD
 

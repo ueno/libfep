@@ -31,6 +31,7 @@
 */
 
 #include "fep.h"
+#include <libfep/private.h>	/* _fep_strsplit_set */
 #include <stdlib.h>
 #include <stdio.h>
 #include <getopt.h>
@@ -92,7 +93,7 @@ main (int argc, char **argv)
       shell[1] = NULL;
       command = shell;
     }
-  if (fep_run (fep, command) < 0)
+  if (fep_run (fep, (const char **) command) < 0)
     {
       fprintf (stderr, "Can't run FEP command\n");
       exit (1);

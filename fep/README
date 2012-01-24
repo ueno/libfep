@@ -14,7 +14,6 @@ Other files listed below are written from scratch:
 - fep.h
 - main.c
 - private.h
-- string.c
 
 All files are released under 3-Clause BSD license.
 See COPYING.BSD for detail.

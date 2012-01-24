@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-SUBDIRS = lib fep libfep tests
+SUBDIRS = lib libfep fep tests
 ACLOCAL_AMFLAGS = -I m4
 EXTRA_DIST = m4/gnulib-cache.m4 git.mk
 
@@ -35,6 +35,11 @@ GITIGNOREFILES =				\
 	snippet					\
 	$(top_builddir)/lcov.html/*		\
 	$(NULL)
+
+distclean-local:
+	if test "x$(srcdir)" = "x."; then :; else \
+		rm -f ChangeLog; \
+	fi
 
 MAINTAINERCLEANFILES =				\
 	$(srcdir)/ChangeLog			\

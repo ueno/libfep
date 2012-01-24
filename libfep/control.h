@@ -21,8 +21,8 @@
 
 typedef enum {
   FEP_CONTROL_SET_STATUS = 0,
-  FEP_CONTROL_SET_PREEDIT = 1,
-  FEP_CONTROL_KEY_EVENT = 4
+  FEP_CONTROL_SET_TEXT = 1,
+  FEP_CONTROL_KEY_EVENT = 2
 } FepControlCommand;
 
 #endif	/* __LIBFEP_CONTROL_H__ */

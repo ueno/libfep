@@ -14,15 +14,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/lib
+
 lib_LTLIBRARIES = libfep.la
 libfep_la_LDFLAGS =							\
 	-version-info "$(LT_CURRENT)":"$(LT_REVISION)":"$(LT_AGE)"	\
 	-export-dynamic
-libfep_la_SOURCES = client.c
+libfep_la_SOURCES = string.c control.c client.c
 libfep_la_LIBADD = $(top_builddir)/lib/libgnu.la
 
 libfepincludedir = $(includedir)/libfep
 libfepinclude_HEADERS = libfep.h keydefs.h control.h client.h
+noinst_HEADERS = private.h
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libfep.pc

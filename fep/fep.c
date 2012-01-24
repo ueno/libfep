@@ -44,6 +44,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <errno.h>
 
 static sigset_t orig_sigmask;
 static sig_atomic_t signals;
@@ -289,7 +290,7 @@ main_loop (Fep *fep)
   fd_set fds;
   char *_clear_screen = remove_padding (clear_screen);
   char *_clr_eos = remove_padding (clr_eos);
-  int retval, i;
+  int retval = 0, i;
 
   while (true)
     {
@@ -319,12 +320,16 @@ main_loop (Fep *fep)
 
 	  memset (buf, 0, sizeof(buf));
 	  bytes_read = _fep_read (fep, buf, sizeof(buf) - 1);
-	  if (bytes_read <= 0)
+	  if (bytes_read < 0)
 	    {
-	      fprintf (stderr, "Can't read from tty in\n");
-	      retval = bytes_read < 0 ? -1 : 0;
+	      fprintf (stderr, "Can't read from tty: %s\n",
+		       strerror (errno));
+	      retval = -1;
 	      break;
 	    }
+	  if (bytes_read == 0)
+	    break;
+
 	  buf[bytes_read] = '\0';
 
 	  for (i = 0; i < bytes_read; i++)
@@ -332,20 +337,20 @@ main_loop (Fep *fep)
 	      uint32_t key;
 	      size_t key_len;
 	      uint32_t state = 0;
-	      FepReadKeyResult retval;
+	      FepReadKeyResult result;
 
-	      retval = _fep_read_key_from_string (buf + i,
+	      result = _fep_read_key_from_string (buf + i,
 						  bytes_read - i,
 						  &key,
 						  &key_len);
-	      if (retval != FEP_READ_KEY_OK)
+	      if (result != FEP_READ_KEY_OK)
 		{
 		  uint32_t _state;
 		  _fep_char_to_key (buf[i], &key, &_state);
 		  state |= _state;
 
 		  if (buf[i] == '\033' && i == bytes_read - 1)
-		    retval = FEP_READ_KEY_NOT_ENOUGH;
+		    result = FEP_READ_KEY_NOT_ENOUGH;
 
 		  if (buf[i] == '\033' && i < bytes_read - 1)
 		    {
@@ -374,11 +379,8 @@ main_loop (Fep *fep)
 	  memset (buf, 0, sizeof(buf));
 	  bytes_read = read (fep->pty, buf, sizeof(buf) - 1);
 	  if (bytes_read <= 0)
-	    {
-	      fprintf (stderr, "Can't read from pty\n");
-	      retval = bytes_read < 0 ? -1 : 0;
-	      break;
-	    }
+	    /* ignore errors when reading from pty */
+	    break;
 	  buf[bytes_read] = '\0';
 
 	  str1 = find_match_end (buf,

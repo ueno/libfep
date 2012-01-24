@@ -1,9 +1,27 @@
+/*
+ * Copyright (C) 2012 Daiki Ueno <ueno@unixuser.org>
+ * Copyright (C) 2012 Red Hat, Inc.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include <libfep/libfep.h>
+#include <libfep/private.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include <byteswap.h>
 #include <unistd.h>
 
 struct _FepClient
@@ -51,37 +69,13 @@ fep_client_open (const char *address)
 int
 fep_client_set_status (FepClient *client, const char *text)
 {
-  char command = FEP_CONTROL_SET_STATUS;
-  uint32_t command_len;
-  size_t len;
-  ssize_t bytes_written, total = 0;
+  FepControlMessage message;
 
-  bytes_written = write (client->control, &command, 1);
-  if (bytes_written < 0)
-    return -1;
+  message.command = FEP_CONTROL_SET_STATUS;
+  message.args = calloc (2, sizeof(char *));
+  message.args[0] = strdup (text);
 
-  len = strlen (text);
-#ifdef WORDS_BIGENDIAN
-  command_len = bswap_32 (len);
-#else
-  command_len = len;
-#endif
-
-  bytes_written = write (client->control, &command_len, 4);
-  if (bytes_written < 0)
-    return -1;
-
-  bytes_written = 0;
-  while (total < len)
-    {
-      bytes_written = write (client->control,
-			     text + bytes_written,
-			     len - bytes_written);
-      if (bytes_written <= 0)
-	return -1;
-      total += bytes_written;
-    }
-  return 0;
+  return _fep_write_control_message (client->control, &message);
 }
 
 void

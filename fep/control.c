@@ -37,7 +37,6 @@
 #include <sys/un.h>
 #include <string.h>
 #include <stdlib.h>
-#include <byteswap.h>
 
 static char *
 create_socket_name (const char *template)
@@ -115,9 +114,9 @@ _fep_open_control_socket (const char *template, char **r_path)
 }
 
 static void
-command_set_status (Fep *fep, char **args, size_t n_args)
+command_set_status (Fep *fep, FepControlMessage *message)
 {
-  _fep_output_draw_statusline (fep, args[0]);
+  _fep_output_draw_statusline (fep, message->args[0]);
 }
 
 int
@@ -126,63 +125,24 @@ _fep_dispatch_control_message (Fep *fep, int fd)
   static const struct
   {
     int command;
-    size_t n_args;
-    void (*handler) (Fep *fep, char **args, size_t n_args);
-  } commands[] =
+    void (*handler) (Fep *fep, FepControlMessage *message);
+  } handlers[] =
       {
-	{ FEP_CONTROL_SET_STATUS, 1, command_set_status },
+	{ FEP_CONTROL_SET_STATUS, command_set_status },
       };
-  char buf[BUFSIZ];
-  int retval, i;
+  FepControlMessage message;
+  int i;
 
-  memset (buf, 0, BUFSIZ);
-  retval = read (fd, buf, 1);
-  if (retval <= 0)
+  if (_fep_read_control_message (fd, &message) < 0)
     return -1;
 
-  for (i = 0; i < SIZEOF (commands); i++)
+  for (i = 0; i < SIZEOF (handlers); i++)
     {
-      if (commands[i].command == buf[0])
+      if (handlers[i].command == message.command)
 	{
-	  char **args = calloc (commands[i].n_args, sizeof(char *));
-	  size_t n_args = 0;
-	  int j;
-	  for (j = 0; j < commands[i].n_args; j++)
-	    {
-	      FepString arg;
-	      uint32_t len;
-
-	      retval = read (fd, buf, 4);
-	      if (retval < 0)
-		{
-		  free (args);
-		  return -1;
-		}
-	      len = *(uint32_t *) buf;
-#ifdef WORDS_BIGENDIAN
-	      len = bswap_32 (len);
-#endif
-	      memset (&arg, 0, sizeof(FepString));
-	      while (len > 0)
-		{
-		  retval = read (fd, buf, len);
-		  if (retval <= 0)
-		    {
-		      free (args);
-		      return -1;
-		    }
-		  _fep_string_append (&arg, buf, retval);
-		  len -= retval;
-		}
-	      args[n_args++] = strndup (arg.str, arg.len);
-	      _fep_string_clear (&arg);
-	      free (arg.str);
-	    }
-
-	  commands[i].handler (fep, args, n_args);
-	  free (args);
+	  handlers[i].handler (fep, &message);
+	  _fep_strfreev (message.args);
 	}
     }
-  
   return 0;
 }

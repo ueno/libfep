@@ -45,6 +45,7 @@
 #include <pty.h>
 #include <signal.h>
 #include "fep.h"
+#include <libfep/private.h>
 
 typedef enum {
   FEP_ATTR_TYPE_ENTER_UNDERLINE,
@@ -87,13 +88,6 @@ struct _FepAttribute {
 };
 typedef struct _FepAttribute FepAttribute;
 
-struct _FepString {
-  char *str;
-  size_t len;
-  size_t cap;
-};
-typedef struct _FepString FepString;
-
 struct _Fep {
   /* input/output via tty */
   int tty_in;
@@ -129,20 +123,6 @@ struct _Fep {
 
 extern const FepAttribute _fep_empty_attr;
 
-#ifndef BUFSIZ
-#define BUFSIZ 4096
-#endif
-
-#ifndef MIN
-#define MIN(a,b) ((a) < (b) ? (a) : (b))
-#endif
-
-#ifndef MAX
-#define MAX(a,b) ((a) > (b) ? (a) : (b))
-#endif
-
-#define SIZEOF(array) (sizeof((array)) / sizeof((array)[0]))
-
 /* csi.c */
 bool             _fep_csi_scan             (const char         *str,
                                             size_t              len,
@@ -177,21 +157,6 @@ FepReadKeyResult _fep_read_key_from_string (const char         *str,
                                             int                 str_len,
                                             uint32_t           *r_key,
                                             size_t             *r_key_len);
-
-/* string.c */
-void             _fep_string_append        (FepString          *buf,
-                                            const char         *str,
-                                            size_t              count);
-void             _fep_string_clear         (FepString          *buf);
-char **          _fep_strsplit             (const char         *str,
-                                            const char         *delimiter,
-                                            int                 max_tokens);
-char **          _fep_strsplit_set         (const char         *str,
-                                            const char         *delimiter,
-                                            int                 max_tokens);
-char *           _fep_strjoinv             (char              **strv,
-                                            const char         *delimiter);
-void             _fep_strfreev             (char              **strv);
 
 /* input.c */
 ssize_t          _fep_read                 (Fep                *fep,
