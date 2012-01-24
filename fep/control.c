@@ -116,7 +116,7 @@ _fep_open_control_socket (const char *template, char **r_path)
 static void
 command_set_status (Fep *fep, FepControlMessage *message)
 {
-  _fep_output_draw_statusline (fep, message->args[0]);
+  _fep_output_statusline (fep, message->args[0]);
 }
 
 int

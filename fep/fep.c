@@ -437,7 +437,7 @@ main_loop (Fep *fep)
 		str1 = str2;
 	      str1_len = bytes_read - (str1 - buf);
 	      _fep_output_string_from_pty (fep, buf, bytes_read - str1_len);
-	      _fep_output_draw_statusline (fep, fep->statusline);
+	      _fep_output_statusline (fep, fep->statusline);
 	      _fep_output_string_from_pty (fep, str1, str1_len);
 	    }
 	  else

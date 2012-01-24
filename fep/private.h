@@ -179,9 +179,7 @@ void             _fep_output_string_from_pty
                                            (Fep                *fep,
                                             const char         *str,
                                             int                 str_len);
-void             _fep_output_string        (Fep                *fep,
-                                            const char         *str);
-void             _fep_output_draw_statusline
+void             _fep_output_statusline
                                            (Fep                *fep,
                                             const char         *statusline);
 void             _fep_output_set_screen_size
