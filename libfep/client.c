@@ -25,6 +25,11 @@
 #include <unistd.h>
 #include <errno.h>
 
+/**
+ * SECTION:client
+ * @short_description: Class for managing client connection to FEP server
+ */
+
 struct _FepClient
 {
   int control;

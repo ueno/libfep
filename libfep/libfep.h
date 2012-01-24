@@ -20,7 +20,6 @@
 #define __LIBFEP_H__
 
 #include <libfep/keydefs.h>
-#include <libfep/control.h>
 #include <libfep/client.h>
 
 #endif	/* __LIBFEP_H__ */

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-gnulib-tool --libtool --import \
+gnulib-tool --libtool --quiet --import \
     byteswap \
     forkpty \
     stdbool \
@@ -8,6 +8,8 @@ gnulib-tool --libtool --import \
     wcsrtombs \
     mbsrtowcs \
     wcswidth \
-    strndup
+    strndup || exit 1
 
-autoreconf -f -i
+gtkdocize || exit 1
+
+autoreconf -f -i || exit 1

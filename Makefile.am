@@ -15,6 +15,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 SUBDIRS = lib libfep fep tests
+
+DISTCHECK_CONFIGURE_FLAGS = --enable-gtk-doc
+
+if ENABLE_GTK_DOC
+SUBDIRS += docs
+endif
+
 ACLOCAL_AMFLAGS = -I m4
 EXTRA_DIST = m4/gnulib-cache.m4 git.mk
 

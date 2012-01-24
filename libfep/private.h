@@ -59,6 +59,13 @@ char *           _fep_strjoinv             (char              **strv,
 void             _fep_strfreev             (char              **strv);
 
 /* control.c */
+typedef enum {
+  FEP_CONTROL_SET_STATUS = 0,
+  FEP_CONTROL_SET_TEXT = 1,
+  FEP_CONTROL_KEY_EVENT = 2,
+  FEP_CONTROL_KEY_EVENT_RESPONSE = 3,
+} FepControlCommand;
+
 struct _FepControlMessage
 {
   FepControlCommand command;

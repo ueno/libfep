@@ -17,7 +17,7 @@ $ echo $SHLVL
 2
 $ ./tests/status "foo"
 $ ./tests/monitor
-keyval = XX, status = XX
+keyval = XX, modifiers = XX
 $
 
 License:

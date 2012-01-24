@@ -71,11 +71,20 @@ AC_SUBST([LT_AGE])
 
 PKG_CHECK_MODULES([NCURSES], [ncurses])
 
+# check for gtk-doc
+m4_ifdef([GTK_DOC_CHECK], [
+GTK_DOC_CHECK([1.14],[--flavour no-tmpl])
+],[
+AM_CONDITIONAL([ENABLE_GTK_DOC], false)
+])
+
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile
 lib/Makefile
 fep/Makefile
 libfep/Makefile
 libfep/libfep.pc
-tests/Makefile])
+tests/Makefile
+docs/Makefile
+docs/version.xml])
 AC_OUTPUT

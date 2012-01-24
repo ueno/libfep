@@ -24,7 +24,7 @@ libfep_la_SOURCES = string.c control.c client.c
 libfep_la_LIBADD = $(top_builddir)/lib/libgnu.la
 
 libfepincludedir = $(includedir)/libfep
-libfepinclude_HEADERS = libfep.h keydefs.h control.h client.h
+libfepinclude_HEADERS = libfep.h keydefs.h client.h
 noinst_HEADERS = private.h
 
 pkgconfigdir = $(libdir)/pkgconfig
