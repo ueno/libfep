@@ -114,9 +114,15 @@ _fep_open_control_socket (const char *template, char **r_path)
 }
 
 static void
-command_set_status (Fep *fep, FepControlMessage *message)
+command_set_cursor_text (Fep *fep, FepControlMessage *message)
 {
-  _fep_output_statusline (fep, message->args[0]);
+  _fep_output_cursor_text (fep, message->args[0]);
+}
+
+static void
+command_set_status_text (Fep *fep, FepControlMessage *message)
+{
+  _fep_output_status_text (fep, message->args[0]);
 }
 
 int
@@ -128,7 +134,8 @@ _fep_dispatch_control_message (Fep *fep, int fd)
     void (*handler) (Fep *fep, FepControlMessage *message);
   } handlers[] =
       {
-	{ FEP_CONTROL_SET_STATUS, command_set_status },
+	{ FEP_CONTROL_SET_CURSOR_TEXT, command_set_cursor_text },
+	{ FEP_CONTROL_SET_STATUS_TEXT, command_set_status_text },
       };
   FepControlMessage message;
   int i;

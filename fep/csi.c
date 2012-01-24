@@ -78,19 +78,12 @@ _fep_csi_scan (const char *str, size_t len, const char final,
 	      *r_csi_len = p - start;
 	      return false;
 	    }
-	  p++;
-	  if (p - str == len)
-	    {
-	      *r_csi = start;
-	      *r_csi_len = p - start;
-	      return false;
-	    }
 	  /* F */
 	  if ((final > 0 && *p == final) ||
 	      ('\100' <= *p && *p <= '\176'))
 	    {
 	      *r_csi = start;
-	      *r_csi_len = p - start;
+	      *r_csi_len = p - start + 1;
 	      return true;
 	    }
 	}

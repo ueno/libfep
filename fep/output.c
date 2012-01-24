@@ -38,6 +38,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <errno.h>
 
 static int tty_out;
 
@@ -149,48 +150,25 @@ _fep_output_string_from_pty (Fep *fep, const char *str, int str_len)
 }
 
 static void
-_fep_output_statusline_string (Fep *fep, const char *str)
+_fep_output_status_text_string (Fep *fep, const char *str)
 {
   if (*str != '\0')
     {
-      const char *p;
       char *mbs;
-      const wchar_t *q;
-      wchar_t *wcs;
-      size_t wcs_len, mbs_len;
-      int width, i;
 
       if (fep->ptybuf.len > 0)
 	_fep_string_clear (&fep->ptybuf);
 
       apply_attr (fep, &fep->attr_tty);
 
-      p = str;
-      wcs = calloc (strlen (str) + 1, sizeof(wchar_t));
-      wcs_len = mbsrtowcs (wcs, &p, strlen (str), NULL);
-      if (wcs_len != (size_t) -1)
-	{
-	  for (i = 0, width = 0; i < wcs_len; i++)
-	    {
-	      int _width = wcwidth (wcs[i]);
-	      if (width + _width > fep->winsize.ws_col)
-		break;
-	      width += _width;
-	    }
-	  wcs[i] = L'\0';
-	  q = wcs;
-	  mbs = calloc (strlen (str) + 1, sizeof(char));
-	  mbs_len = wcsrtombs (mbs, &q, strlen (str), NULL);
-	  assert (mbs_len != (size_t) -1);
-	  write (fep->tty_out, mbs, mbs_len);
-	}
-      free (wcs);
+      mbs = _fep_strtrunc (str, fep->winsize.ws_col);
+      write (fep->tty_out, mbs, strlen (mbs));
       free (mbs);
     }
 }
 
 static void
-_fep_output_goto_statusline (Fep *fep, int col)
+_fep_output_goto_status_text (Fep *fep, int col)
 {
   int row = fep->winsize.ws_row;
   if (row != fep->cursor.row || col != fep->cursor.col)
@@ -203,20 +181,61 @@ _fep_output_goto_statusline (Fep *fep, int col)
 }
 
 void
-_fep_output_statusline (Fep *fep, const char *statusline)
+_fep_output_status_text (Fep *fep, const char *text)
 {
 
-  if (fep->statusline != statusline)
+  if (fep->status_text != text)
     {
-      free (fep->statusline);
-      fep->statusline = strdup (statusline);
+      free (fep->status_text);
+      fep->status_text = strdup (text);
     }
   _fep_putp (fep, save_cursor);
 
-  _fep_output_goto_statusline (fep, 0);
+  _fep_output_goto_status_text (fep, 0);
   _fep_putp (fep, clr_eol);
 
-  _fep_output_statusline_string (fep, fep->statusline);
+  _fep_output_status_text_string (fep, fep->status_text);
+  _fep_putp (fep, restore_cursor);
+}
+
+void
+_fep_output_cursor_text (Fep *fep, const char *text)
+{
+  char *str;
+
+  _fep_putp (fep, save_cursor);
+
+  if (fep->cursor_text)
+    {
+      int width = _fep_strwidth (fep->cursor_text);
+      if (width > 0)
+	{
+	  str = tparm (cursor_address, fep->cursor.row, fep->cursor.col);
+	  _fep_putp (fep, str);
+
+	  str = malloc (width * sizeof(char));
+	  memset (str, ' ', width * sizeof(char));
+	  write (fep->tty_out, str, width * sizeof(char));
+	  free (fep->cursor_text);
+	  fep->cursor_text = NULL;
+	}
+    }
+
+  if (*text != '\0' && _fep_output_get_cursor_position (fep, &fep->cursor))
+    {
+      str = tparm (cursor_address, fep->cursor.row, fep->cursor.col);
+      _fep_putp (fep, str);
+
+      fep->cursor_text = _fep_strtrunc (text,
+					fep->winsize.ws_col - fep->cursor.col);
+
+      if (fep->ptybuf.len > 0)
+	_fep_string_clear (&fep->ptybuf);
+
+      apply_attr (fep, &fep->attr_tty);
+
+      write (fep->tty_out, fep->cursor_text, strlen (fep->cursor_text));
+    }
   _fep_putp (fep, restore_cursor);
 }
 
@@ -225,8 +244,76 @@ _fep_output_set_screen_size (Fep *fep, int col, int row)
 {
   _fep_putp (fep, save_cursor);
   _fep_output_change_scroll_region (fep, 0, row - 1);
-  _fep_output_statusline (fep, fep->statusline);
+  _fep_output_status_text (fep, fep->status_text);
   _fep_putp (fep, restore_cursor);
+}
+
+/* http://www.vt100.net/docs/vt510-rm/DSR-CPR */
+static bool
+_fep_output_dsr_cpr (Fep *fep, FepPoint *point)
+{
+  FepString csibuf;
+  char buf[16];
+#define RETRY 2;
+  int retry = RETRY
+
+  _fep_putp (fep, "\033\1336n"); /* DSR-CPR */
+  memset (&csibuf, 0, sizeof(FepString));
+  while (--retry > 0)
+    {
+      ssize_t bytes_read;
+      char *csi;
+      size_t csi_len;
+
+      bytes_read = _fep_read (fep, buf, sizeof(buf));
+      if (bytes_read < 0)
+	{
+	  free (csibuf.str);
+	  return false;
+	}
+      _fep_string_append (&csibuf, buf, bytes_read);
+      if (_fep_csi_scan (csibuf.str, csibuf.len, 'R',
+			 (const char **) &csi, &csi_len))
+	{
+	  const char *csi_end;
+	  char **strv, *endptr;
+	  int row, col;
+
+	  csi[csi_len - 1] = '\0';
+	  strv = _fep_strsplit (csi + 2, ";", 2);
+	  errno = 0;
+	  point->row = strtoul (strv[0], &endptr, 10);
+	  if (errno != 0 || *endptr != '\0')
+	    {
+	      _fep_strfreev (strv);
+	      free (csibuf.str);
+	      return false;
+	    }
+	  point->col = strtoul (strv[1], &endptr, 10);
+	  if (errno != 0 || *endptr != '\0')
+	    {
+	      _fep_strfreev (strv);
+	      free (csibuf.str);
+	      return false;
+	    }
+	  _fep_strfreev (strv);
+
+	  /* rewind data around CPR */
+	  _fep_string_append (&fep->ttybuf,
+			      csibuf.str,
+			      csi - csibuf.str);
+	  csi_end = csi + csi_len;
+	  _fep_string_append (&fep->ttybuf,
+			      csi_end,
+			      bytes_read - (csi_end - csibuf.str));
+	  free (csibuf.str);
+	  return true;
+	}
+      if (csi == NULL)
+	_fep_string_append (&csibuf, buf, bytes_read);
+    }
+  free (csibuf.str);
+  return false;
 }
 
 void
@@ -239,5 +326,24 @@ _fep_output_init_screen (Fep *fep)
   str = tparm (clear_screen, 2);
   _fep_putp (fep, str);
 
-  _fep_output_statusline (fep, "");
+  fep->has_cpr = _fep_output_dsr_cpr (fep, &fep->cursor);
+
+  _fep_output_status_text (fep, "");
+}
+
+bool
+_fep_output_get_cursor_position (Fep *fep, FepPoint *point)
+{
+  if (fep->cursor.row >= 0 && fep->cursor.col >= 0)
+    {
+      memcpy (point, &fep->cursor, sizeof(FepPoint));
+      return true;
+    }
+
+  if (fep->has_cpr && _fep_output_dsr_cpr (fep, &fep->cursor))
+    {
+      memcpy (point, &fep->cursor, sizeof(FepPoint));
+      return true;
+    }
+  return false;
 }

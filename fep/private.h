@@ -88,7 +88,8 @@ struct _FepAttribute {
 };
 typedef struct _FepAttribute FepAttribute;
 
-struct _Fep {
+struct _Fep
+{
   /* input/output via tty */
   int tty_in;
   int tty_out;
@@ -109,14 +110,16 @@ struct _Fep {
   /* input buffer for pty (to keep incomplete escape sequences from pty) */
   FepString ptybuf;
 
-  FepPoint cursor;
+  bool has_cpr;
 
   FepAttribute attr;
   FepAttribute attr_tty;
   FepAttribute attr_pty;
   int attr_codes[FEP_ATTR_TYPE_LAST];
 
-  char *statusline;
+  char *cursor_text;
+  FepPoint cursor;
+  char *status_text;
 
   struct winsize winsize;
   struct termios orig_termios;
@@ -180,14 +183,18 @@ void             _fep_output_string_from_pty
                                            (Fep                *fep,
                                             const char         *str,
                                             int                 str_len);
-void             _fep_output_statusline
-                                           (Fep                *fep,
-                                            const char         *statusline);
+void             _fep_output_cursor_text   (Fep                *fep,
+                                            const char         *text);
+void             _fep_output_status_text   (Fep                *fep,
+                                            const char         *text);
 void             _fep_output_set_screen_size
                                            (Fep                *fep,
                                             int                 col,
                                             int                 row);
 void             _fep_output_init_screen   (Fep                *fep);
+bool             _fep_output_get_cursor_position
+                                           (Fep                *fep,
+                                            FepPoint           *point);
 
 /* control.c */
 int              _fep_open_control_socket  (const char         *template,

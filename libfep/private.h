@@ -19,6 +19,10 @@
 #ifndef __LIBFEP_PRIVATE_H__
 #define __LIBFEP_PRIVATE_H__
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <stdio.h>
 #include <libfep/libfep.h>
 
@@ -44,26 +48,30 @@ struct _FepString {
 };
 typedef struct _FepString FepString;
 
-void             _fep_string_append        (FepString          *buf,
-                                            const char         *str,
-                                            size_t              count);
-void             _fep_string_clear         (FepString          *buf);
-char **          _fep_strsplit             (const char         *str,
-                                            const char         *delimiter,
-                                            int                 max_tokens);
-char **          _fep_strsplit_set         (const char         *str,
-                                            const char         *delimiter,
-                                            int                 max_tokens);
-char *           _fep_strjoinv             (char              **strv,
-                                            const char         *delimiter);
-void             _fep_strfreev             (char              **strv);
+void    _fep_string_append (FepString  *buf,
+                            const char *str,
+                            size_t      count);
+void    _fep_string_clear  (FepString  *buf);
+char ** _fep_strsplit      (const char *str,
+                            const char *delimiter,
+                            int         max_tokens);
+char ** _fep_strsplit_set  (const char *str,
+                            const char *delimiter,
+                            int         max_tokens);
+char *  _fep_strjoinv      (char      **strv,
+                            const char *delimiter);
+void    _fep_strfreev      (char      **strv);
+int     _fep_strwidth      (const char *str);
+char *  _fep_strtrunc      (const char *str,
+                            int         width);
 
 /* control.c */
 typedef enum {
-  FEP_CONTROL_SET_STATUS = 0,
-  FEP_CONTROL_SET_TEXT = 1,
-  FEP_CONTROL_KEY_EVENT = 2,
-  FEP_CONTROL_KEY_EVENT_RESPONSE = 3,
+  FEP_CONTROL_SET_STATUS = 1,
+  FEP_CONTROL_SET_CURSOR_TEXT = 2,
+  FEP_CONTROL_SET_STATUS_TEXT = 3,
+  FEP_CONTROL_KEY_EVENT = 4,
+  FEP_CONTROL_KEY_EVENT_RESPONSE = 5,
 } FepControlCommand;
 
 struct _FepControlMessage

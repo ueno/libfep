@@ -29,8 +29,8 @@ static const struct
   size_t n_args;
 } commands[] =
   {
-    { FEP_CONTROL_SET_STATUS, 1 },
-    { FEP_CONTROL_SET_TEXT, 1 },
+    { FEP_CONTROL_SET_CURSOR_TEXT, 1 },
+    { FEP_CONTROL_SET_STATUS_TEXT, 1 },
     { FEP_CONTROL_KEY_EVENT, 2 },
     { FEP_CONTROL_KEY_EVENT_RESPONSE, 1 },
   };

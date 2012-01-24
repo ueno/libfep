@@ -14,14 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-noinst_PROGRAMS = status monitor
+bin_PROGRAMS = fepcli
 
-status_CFLAGS = -I$(top_srcdir)
-status_LDADD = $(top_builddir)/libfep/libfep.la
-status_SOURCES = status.c
-
-monitor_CFLAGS = -I$(top_srcdir)
-monitor_LDADD = $(top_builddir)/libfep/libfep.la
-monitor_SOURCES = monitor.c
+fepcli_CFLAGS = -I$(top_srcdir)
+fepcli_LDADD = $(top_builddir)/libfep/libfep.la
+fepcli_SOURCES = cli.c
 
 -include $(top_srcdir)/git.mk

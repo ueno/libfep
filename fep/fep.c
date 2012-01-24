@@ -208,7 +208,7 @@ fep_new (void)
   fep->server = -1;
   for (i = 0; i < FEP_MAX_CLIENTS; i++)
     fep->clients[i] = -1;
-  fep->statusline = strdup ("");
+  fep->status_text = strdup ("");
   return fep;
 }
 
@@ -253,10 +253,15 @@ fep_run (Fep *fep, const char *command[])
 
       tcgetattr (fep->tty_in, &termios);
       cfmakeraw (&termios);
+      termios.c_cc[VMIN] = 0;
+      termios.c_cc[VTIME] = 3;
       tcsetattr (fep->tty_in, TCSANOW, &termios);
 
       _fep_sgr_get_attr_codes (fep->attr_codes);
       _fep_output_init_screen (fep);
+
+      if (_fep_output_get_cursor_position (fep, &fep->cursor))
+	fep->has_cpr = true;
 
       set_signal_handler ();
       retval = main_loop (fep);
@@ -440,7 +445,7 @@ main_loop (Fep *fep)
 		str1 = str2;
 	      str1_len = bytes_read - (str1 - buf);
 	      _fep_output_string_from_pty (fep, buf, bytes_read - str1_len);
-	      _fep_output_statusline (fep, fep->statusline);
+	      _fep_output_status_text (fep, fep->status_text);
 	      _fep_output_string_from_pty (fep, str1, str1_len);
 	    }
 	  else
@@ -492,6 +497,7 @@ fep_free (Fep *fep)
   rmdir (fep->control_socket_path);
   free (fep->control_socket_path);
 
-  free (fep->statusline);
+  free (fep->cursor_text);
+  free (fep->status_text);
   free (fep);
 }

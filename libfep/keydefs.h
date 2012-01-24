@@ -19,6 +19,11 @@
 #ifndef __LIBFEP_KEYDEFS_H__
 #define __LIBFEP_KEYDEFS_H__
 
+/**
+ * SECTION:keydefs
+ * @short_description: Constant definitions for keyval/modifiers
+ */
+
 typedef enum  {
   FEP_NONE = 0,
   FEP_SHIFT_MASK = 1 << 0,

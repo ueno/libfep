@@ -27,7 +27,7 @@
 
 /**
  * SECTION:client
- * @short_description: Class for managing client connection to FEP server
+ * @short_description: Client connection to FEP server
  */
 
 struct _FepClient
@@ -37,6 +37,16 @@ struct _FepClient
   void *key_event_handler_data;
 };
 
+/**
+ * fep_client_open:
+ * @address: (allow-none): socket address of the FEP server
+ *
+ * Connect to the FEP server running at @address.  If @address is
+ * %NULL, it gets the address from the environment variable
+ * `LIBFEP_CONTROL_SOCK`.
+ *
+ * Returns: a new FepClient.
+ */
 FepClient *
 fep_client_open (const char *address)
 {
@@ -51,6 +61,7 @@ fep_client_open (const char *address)
 
   client = malloc (sizeof(FepClient));
 
+  memset (&sun, 0, sizeof(struct sockaddr_un));
   sun.sun_family = AF_UNIX;
   memcpy (sun.sun_path, address, strlen (address));
 
@@ -74,19 +85,58 @@ fep_client_open (const char *address)
   return client;
 }
 
+/**
+ * fep_client_set_cursor_text:
+ * @client: a FepClient
+ * @text: a cursor text
+ *
+ * Request to display @text at the cursor position on the terminal.
+ *
+ * Returns: 0 on success, -1 on error.
+ */
 int
-fep_client_set_status (FepClient *client, const char *text)
+fep_client_set_cursor_text (FepClient *client, const char *text)
 {
   FepControlMessage message;
 
-  message.command = FEP_CONTROL_SET_STATUS;
+  message.command = FEP_CONTROL_SET_CURSOR_TEXT;
   message.args = calloc (2, sizeof(char *));
   message.args[0] = strdup (text);
 
   return _fep_write_control_message (client->control, &message);
 }
 
+/**
+ * fep_client_set_status_text:
+ * @client: a FepClient
+ * @text: a status text
+ *
+ * Request to display @text at the bottom of the terminal.
+ *
+ * Returns: 0 on success, -1 on error.
+ */
 int
+fep_client_set_status_text (FepClient *client, const char *text)
+{
+  FepControlMessage message;
+
+  message.command = FEP_CONTROL_SET_STATUS_TEXT;
+  message.args = calloc (2, sizeof(char *));
+  message.args[0] = strdup (text);
+
+  return _fep_write_control_message (client->control, &message);
+}
+
+/**
+ * fep_client_set_key_event_handler:
+ * @client: a FepClient
+ * @handler: a handler function
+ * @data: user supplied data
+ *
+ * Set a key event handler which will be called when client receives
+ * key events.
+ */
+void
 fep_client_set_key_event_handler (FepClient *client,
 				  FepKeyEventHandler handler,
 				  void *data)
@@ -95,12 +145,28 @@ fep_client_set_key_event_handler (FepClient *client,
   client->key_event_handler_data = data;
 }
 
+/**
+ * fep_client_get_key_event_poll_fd:
+ * @client: a FepClient
+ *
+ * Get the file descriptor of the control socket which can be used by poll().
+ *
+ * Returns: a file descriptor
+ */
 int
 fep_client_get_key_event_poll_fd (FepClient *client)
 {
   return client->control;
 }
 
+/**
+ * fep_client_dispatch_key_event:
+ * @client: a FepClient
+ *
+ * Dispatch a key event.
+ *
+ * Returns: 0 on success, -1 on failure.
+ */
 int
 fep_client_dispatch_key_event (FepClient *client)
 {
@@ -151,6 +217,12 @@ fep_client_dispatch_key_event (FepClient *client)
   return retval;
 }
 
+/**
+ * fep_client_close:
+ * @client: a FepClient
+ *
+ * Close the control socket and release the memory allocated for @client.
+ */
 void
 fep_client_close (FepClient *client)
 {

@@ -18,6 +18,7 @@
 
 #include "private.h"
 #include <string.h>
+#include <wchar.h>
 #include <stdlib.h>
 
 void
@@ -126,4 +127,51 @@ _fep_strfreev (char **strv)
   for (p = strv; *p; p++)
     free (*p);
   free (strv);
+}
+
+int
+_fep_strwidth (const char *str)
+{
+  const char *p;
+  wchar_t *wcs;
+  size_t wcs_len;
+  int width;
+
+  p = str;
+  wcs = calloc (strlen (str) + 1, sizeof(wchar_t));
+  wcs_len = mbsrtowcs (wcs, &p, strlen (str), NULL);
+  width = wcswidth (wcs, wcs_len);
+  free (wcs);
+  return width;
+}
+
+char *
+_fep_strtrunc (const char *str, int width)
+{
+  const char *p;
+  char *mbs;
+  const wchar_t *q;
+  wchar_t *wcs;
+  size_t wcs_len;
+  int total, i;
+
+  p = str;
+  wcs = calloc (strlen (str) + 1, sizeof(wchar_t));
+  wcs_len = mbsrtowcs (wcs, &p, strlen (str), NULL);
+  if (wcs_len == (size_t) -1)
+    return NULL;
+
+  for (i = 0, total = 0; i < wcs_len; i++)
+    {
+      int w = wcwidth (wcs[i]);
+      if (total + w > width)
+	break;
+      total += w;
+    }
+  wcs[i] = L'\0';
+  q = wcs;
+  mbs = calloc (strlen (str) + 1, sizeof(char));
+  wcsrtombs (mbs, &q, strlen (str), NULL);
+  free (wcs);
+  return mbs;
 }
