@@ -74,28 +74,23 @@ static char **
 _fep_strsplit_full (const char *str, const char *delimiter, int max_tokens,
 		    char *(*search) (const char *, const char *, const char **))
 {
-  size_t len = 0;
+  size_t n_delimiters = 0;
   const char *p, *q;
   char *next, **strv, **r;
 
   p = search (str, delimiter, &next);
-  if (!p && str[0] != '\0')
-    len++;
-  else
+  for (; p && *p != '\0'; p = search (p, delimiter, &next))
     {
-      for (; p && *p != '\0'; p = search (p, delimiter, &next))
-	{
-	  len++;
-	  p = next;
-	}
+      n_delimiters++;
+      p = next;
     }
 
-  strv = calloc (len + 1, sizeof (char *));
-  for (p = str, q = search (p, delimiter, &next), r = strv;
-       q && *q != '\0';
-       q = search (p, delimiter, &next), r++)
+  p = str;
+  q = search (p, delimiter, &next);
+  r = strv = calloc (n_delimiters + 2, sizeof (char *));
+  for (; q && *q != '\0'; q = search (p, delimiter, &next))
     {
-      *r = strndup (p, q - p);
+      *r++ = strndup (p, q - p);
       p = next;
     }
   if (p - str < strlen (str))
