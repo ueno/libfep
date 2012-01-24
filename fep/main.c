@@ -96,7 +96,7 @@ main (int argc, char **argv)
   if (fep_run (fep, (const char **) command) < 0)
     {
       fprintf (stderr, "Can't run FEP command\n");
-      exit (1);
+      exit (2);
     }
   fep_free (fep);
 

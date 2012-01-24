@@ -129,7 +129,7 @@ _fep_char_to_key (char      tty,
 	}
       else
 	{
-	  key = 0;
+	  key = tty;
 	  state = 0;
 	}
     }

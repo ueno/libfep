@@ -14,10 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-noinst_PROGRAMS = status
+noinst_PROGRAMS = status monitor
 
 status_CFLAGS = -I$(top_srcdir)
 status_LDADD = $(top_builddir)/libfep/libfep.la
 status_SOURCES = status.c
+
+monitor_CFLAGS = -I$(top_srcdir)
+monitor_LDADD = $(top_builddir)/libfep/libfep.la
+monitor_SOURCES = monitor.c
 
 -include $(top_srcdir)/git.mk

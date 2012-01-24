@@ -23,10 +23,13 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <unistd.h>
+#include <errno.h>
 
 struct _FepClient
 {
   int control;
+  FepKeyEventHandler key_event_handler;
+  void *key_event_handler_data;
 };
 
 FepClient *
@@ -76,6 +79,71 @@ fep_client_set_status (FepClient *client, const char *text)
   message.args[0] = strdup (text);
 
   return _fep_write_control_message (client->control, &message);
+}
+
+int
+fep_client_set_key_event_handler (FepClient *client,
+				  FepKeyEventHandler handler,
+				  void *data)
+{
+  client->key_event_handler = handler;
+  client->key_event_handler_data = data;
+}
+
+int
+fep_client_get_key_event_poll_fd (FepClient *client)
+{
+  return client->control;
+}
+
+int
+fep_client_dispatch_key_event (FepClient *client)
+{
+  FepControlMessage message;
+  char *endptr;
+  unsigned int key;
+  FepModifierType modifiers;
+  int retval;
+
+  retval = _fep_read_control_message (client->control, &message);
+  if (retval < 0)
+    return retval;
+
+  if (message.command != FEP_CONTROL_KEY_EVENT)
+    {
+      _fep_strfreev (message.args);
+      return -1;
+    }
+
+  errno = 0;
+  key = strtoul (message.args[0], &endptr, 10);
+  if (errno != 0 || *endptr != '\0')
+    {
+      _fep_strfreev (message.args);
+      return -1;
+    }
+
+  errno = 0;
+  modifiers = strtoul (message.args[1], &endptr, 10);
+  if (errno != 0 || *endptr != '\0')
+    {
+      _fep_strfreev (message.args);
+      return -1;
+    }
+
+  _fep_strfreev (message.args);
+  message.command = FEP_CONTROL_KEY_EVENT_RESPONSE;
+  message.args = calloc (2, sizeof(char *));
+  if (client->key_event_handler &&
+      client->key_event_handler (key, modifiers,
+				 client->key_event_handler_data))
+    message.args[0] = strdup ("1");
+  else
+    message.args[0] = strdup ("0");
+
+  retval = _fep_write_control_message (client->control, &message);
+  _fep_strfreev (message.args);
+  return retval;
 }
 
 void

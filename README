@@ -16,7 +16,6 @@ $ fep -e /bin/sh
 $ echo $SHLVL
 2
 $ ./tests/status "foo"
-$ ./tests/preedit "bar"
 $ ./tests/monitor
 keyval = XX, status = XX
 $

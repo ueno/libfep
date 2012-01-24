@@ -243,6 +243,7 @@ fep_run (Fep *fep, const char *command[])
 	close (fep->tty_in);
       execvp (command[0], (char * const *) command);
       perror (command[0]);
+      fprintf (stderr, "child exit\n");
       exit (1);
     }
   else
@@ -338,6 +339,9 @@ main_loop (Fep *fep)
 	      size_t key_len;
 	      uint32_t state = 0;
 	      FepReadKeyResult result;
+	      FepControlMessage server_message, client_message;
+	      int j;
+	      bool handled;
 
 	      result = _fep_read_key_from_string (buf + i,
 						  bytes_read - i,
@@ -360,10 +364,45 @@ main_loop (Fep *fep)
 		  key_len = 1;
 		}
 
-	      if (state & FEP_MOD1_MASK)
-		write (fep->pty, buf + i - 1, key_len + 1);
-	      else
-		write (fep->pty, buf + i, key_len);
+	      handled = false;
+	      server_message.command = FEP_CONTROL_KEY_EVENT;
+	      server_message.args = calloc (2, sizeof(char *));
+	      server_message.args[0] = calloc (16, sizeof(char *));
+	      snprintf (server_message.args[0], 15, "%u", key);
+	      server_message.args[1] = calloc (16, sizeof(char *));
+	      snprintf (server_message.args[1], 15, "%u", state);
+	      for (j = 0; j < fep->n_clients; j++)
+		{
+		  if (fep->clients[j] < 0)
+		    continue;
+		  if (_fep_write_control_message (fep->clients[j],
+						  &server_message) < 0)
+		    fprintf (stderr, "Can't write to client %d\n", j);
+		  else
+		    {
+		      if (_fep_read_control_message (fep->clients[j],
+						     &client_message) < 0)
+			fprintf (stderr, "Can't read from client %d: %s\n",
+				 j, strerror (errno));
+		      else if (client_message.command !=
+			       FEP_CONTROL_KEY_EVENT_RESPONSE)
+			fprintf (stderr,
+				 "Invalid response from client %d: %d\n",
+				 j, client_message.command);
+		      else
+			{
+			  if (strcmp (client_message.args[0], "1") == 0)
+			    handled = true;
+			}
+		    }
+		}
+	      if (!handled)
+		{
+		  if (state & FEP_MOD1_MASK)
+		    write (fep->pty, buf + i - 1, key_len + 1);
+		  else
+		    write (fep->pty, buf + i, key_len);
+		}
 
 	      state = 0;
 	      i += (key_len - 1);
@@ -420,6 +459,7 @@ main_loop (Fep *fep)
     }
   free (_clear_screen);
   free (_clr_eos);
+
   return retval;
 }
 

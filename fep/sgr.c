@@ -50,8 +50,10 @@ _fep_sgr_params_to_attr (const char **params, int *attr_codes,
   for (p = params; p; p++)
     {
       char *endptr;
-      int param = strtoul (*p, &endptr, 10);
+      int param;
 
+      errno = 0;
+      param = strtoul (*p, &endptr, 10);
       assert (errno == 0 && *endptr == '\0');
 
       if (param == 0)
@@ -186,7 +188,10 @@ _fep_sgr_get_attr_codes (int *attr_codes)
 	{
 	  char **_params = _fep_strsplit (params, ";", -1);
 	  char *endptr;
-	  int code = strtoul (_params[name_code[i].index], &endptr, 10);
+	  int code;
+
+	  errno = 0;
+	  code = strtoul (_params[name_code[i].index], &endptr, 10);
 	  if (errno == 0 && endptr == '\0')
 	    attr_codes[name_code[i].code] = code;
 	  _fep_strfreev (_params);

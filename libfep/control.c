@@ -32,6 +32,7 @@ static const struct
     { FEP_CONTROL_SET_STATUS, 1 },
     { FEP_CONTROL_SET_TEXT, 1 },
     { FEP_CONTROL_KEY_EVENT, 2 },
+    { FEP_CONTROL_KEY_EVENT_RESPONSE, 1 },
   };
 
 int
@@ -53,7 +54,7 @@ _fep_read_control_message (int fd,
 	  int j;
 	  char **args;
 
-	  message->command = buf[0];
+	  message->command = commands[i].command;
 	  args = message->args = calloc (commands[i].n_args + 1,
 					 sizeof(char *));
 	  for (j = 0; j < commands[i].n_args; j++)
@@ -87,9 +88,10 @@ _fep_read_control_message (int fd,
 	      _fep_string_clear (&arg);
 	      free (arg.str);
 	    }
+	  return 0;
 	}
     }
-  return 0;
+  return -1;
 }
 
 int
@@ -102,17 +104,18 @@ _fep_write_control_message (int fd,
     {
       if (commands[i].command == message->command)
 	{
+	  char command_char = message->command;
+	  ssize_t bytes_written;
 	  int j;
 
-	  for (j = 0; j < commands[i].n_args; i++)
+	  bytes_written = write (fd, &command_char, 1);
+	  if (bytes_written < 0)
+	    return -1;
+
+	  for (j = 0; j < commands[i].n_args; j++)
 	    {
-	      ssize_t bytes_written;
 	      size_t arg_len, total;
 	      uint32_t length_word;
-
-	      bytes_written = write (fd, &message->command, 1);
-	      if (bytes_written < 0)
-		return -1;
 
 	      arg_len = strlen (message->args[j]);
 #ifdef WORDS_BIGENDIAN
