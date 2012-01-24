@@ -37,6 +37,7 @@
 #include "private.h"
 #include <string.h>
 #include <stdlib.h>
+#include <assert.h>
 
 static int tty_out;
 
@@ -147,26 +148,44 @@ _fep_output_string_from_pty (Fep *fep, const char *str, int str_len)
     }
 }
 
-void
-_fep_output_string (Fep *fep, const char *str)
+static void
+_fep_output_statusline_string (Fep *fep, const char *str)
 {
   if (*str != '\0')
     {
-      const char *p = str;
-      wchar_t *dest;
-      size_t len;
+      const char *p;
+      char *mbs;
+      const wchar_t *q;
+      wchar_t *wcs;
+      size_t wcs_len, mbs_len;
+      int width, i;
 
       if (fep->ptybuf.len > 0)
 	_fep_string_clear (&fep->ptybuf);
 
       apply_attr (fep, &fep->attr_tty);
 
-      len = mbsrtowcs (NULL, &p, strlen (str), NULL);
-      dest = malloc (len * sizeof(wchar_t));
-      mbsrtowcs (dest, &p, strlen (str), NULL);
-      fep->cursor.col += wcswidth (dest, len);
-      free (dest);
-      write (fep->tty_out, str, strlen (str));
+      p = str;
+      wcs = calloc (strlen (str) + 1, sizeof(wchar_t));
+      wcs_len = mbsrtowcs (wcs, &p, strlen (str), NULL);
+      if (wcs_len != (size_t) -1)
+	{
+	  for (i = 0, width = 0; i < wcs_len; i++)
+	    {
+	      int _width = wcwidth (wcs[i]);
+	      if (width + _width > fep->winsize.ws_col)
+		break;
+	      width += _width;
+	    }
+	  wcs[i] = L'\0';
+	  q = wcs;
+	  mbs = calloc (strlen (str) + 1, sizeof(char));
+	  mbs_len = wcsrtombs (mbs, &q, strlen (str), NULL);
+	  assert (mbs_len != (size_t) -1);
+	  write (fep->tty_out, mbs, mbs_len);
+	}
+      free (wcs);
+      free (mbs);
     }
 }
 
@@ -184,7 +203,7 @@ _fep_output_goto_statusline (Fep *fep, int col)
 }
 
 void
-_fep_output_draw_statusline (Fep *fep, const char *statusline)
+_fep_output_statusline (Fep *fep, const char *statusline)
 {
 
   if (fep->statusline != statusline)
@@ -197,7 +216,7 @@ _fep_output_draw_statusline (Fep *fep, const char *statusline)
   _fep_output_goto_statusline (fep, 0);
   _fep_putp (fep, clr_eol);
 
-  _fep_output_string (fep, fep->statusline);
+  _fep_output_statusline_string (fep, fep->statusline);
   _fep_putp (fep, restore_cursor);
 }
 
@@ -206,7 +225,7 @@ _fep_output_set_screen_size (Fep *fep, int col, int row)
 {
   _fep_putp (fep, save_cursor);
   _fep_output_change_scroll_region (fep, 0, row - 1);
-  _fep_output_draw_statusline (fep, fep->statusline);
+  _fep_output_statusline (fep, fep->statusline);
   _fep_putp (fep, restore_cursor);
 }
 
@@ -220,5 +239,5 @@ _fep_output_init_screen (Fep *fep)
   str = tparm (clear_screen, 2);
   _fep_putp (fep, str);
 
-  _fep_output_draw_statusline (fep, "");
+  _fep_output_statusline (fep, "");
 }

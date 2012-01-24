@@ -35,11 +35,17 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <getopt.h>
+#include <locale.h>
 
 static void
 usage (FILE *out, const char *program_name)
 {
-  fprintf (out, "Usage: %s OPTIONS...\n", program_name);
+  fprintf (out,
+	   "Usage: %s OPTIONS...\n"
+	   "where OPTIONS are:\n"
+	   "  -e, --executable=COMMAND\tCommand to run (default: $SHELL)\n"
+	   "  -h, --help\tShow this help\n",
+	   program_name);
 }
 
 int
@@ -48,6 +54,8 @@ main (int argc, char **argv)
   Fep *fep;
   int c;
   char **command = NULL;
+
+  setlocale (LC_ALL, "");
 
   while (1)
     {

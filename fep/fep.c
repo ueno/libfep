@@ -45,6 +45,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <errno.h>
+#include <assert.h>
 
 static sigset_t orig_sigmask;
 static sig_atomic_t signals;
@@ -77,6 +78,7 @@ done (Fep *fep, int code)
 {
   _fep_output_change_scroll_region (fep, 0, fep->winsize.ws_row);
   tcsetattr (fep->tty_in, TCSAFLUSH, &fep->orig_termios);
+  fep_free (fep);
   exit (code);
 }
 
@@ -214,7 +216,6 @@ int
 fep_run (Fep *fep, const char *command[])
 {
   pid_t pid;
-  char *path;
 
   if (isatty (fep->tty_in))
     fep->tty_in = open ("/dev/tty", O_RDONLY);
@@ -224,12 +225,12 @@ fep_run (Fep *fep, const char *command[])
   ioctl (fep->tty_in, TIOCGWINSZ, &fep->winsize);
   fep->winsize.ws_row--;
 
-  fep->server = _fep_open_control_socket ("fep-XXXXXX/control", &path);
+  fep->server = _fep_open_control_socket ("fep-XXXXXX/control",
+					  &fep->control_socket_path);
   if (fep->server < 0)
     return -1;
 
-  setenv ("LIBFEP_CONTROL_SOCK", path, 1);
-  free (path);
+  setenv ("LIBFEP_CONTROL_SOCK", fep->control_socket_path, 1);
 
   pid = forkpty (&fep->pty, NULL, &fep->orig_termios, &fep->winsize);
   if (pid < 0)
@@ -243,7 +244,6 @@ fep_run (Fep *fep, const char *command[])
 	close (fep->tty_in);
       execvp (command[0], (char * const *) command);
       perror (command[0]);
-      fprintf (stderr, "child exit\n");
       exit (1);
     }
   else
@@ -339,7 +339,7 @@ main_loop (Fep *fep)
 	      size_t key_len;
 	      uint32_t state = 0;
 	      FepReadKeyResult result;
-	      FepControlMessage server_message, client_message;
+	      FepControlMessage server_message;
 	      int j;
 	      bool handled;
 
@@ -366,7 +366,7 @@ main_loop (Fep *fep)
 
 	      handled = false;
 	      server_message.command = FEP_CONTROL_KEY_EVENT;
-	      server_message.args = calloc (2, sizeof(char *));
+	      server_message.args = calloc (3, sizeof(char *));
 	      server_message.args[0] = calloc (16, sizeof(char *));
 	      snprintf (server_message.args[0], 15, "%u", key);
 	      server_message.args[1] = calloc (16, sizeof(char *));
@@ -380,6 +380,7 @@ main_loop (Fep *fep)
 		    fprintf (stderr, "Can't write to client %d\n", j);
 		  else
 		    {
+		      FepControlMessage client_message;
 		      if (_fep_read_control_message (fep->clients[j],
 						     &client_message) < 0)
 			fprintf (stderr, "Can't read from client %d: %s\n",
@@ -394,8 +395,10 @@ main_loop (Fep *fep)
 			  if (strcmp (client_message.args[0], "1") == 0)
 			    handled = true;
 			}
+		      _fep_strfreev (client_message.args);
 		    }
 		}
+	      _fep_strfreev (server_message.args);
 	      if (!handled)
 		{
 		  if (state & FEP_MOD1_MASK)
@@ -437,7 +440,7 @@ main_loop (Fep *fep)
 		str1 = str2;
 	      str1_len = bytes_read - (str1 - buf);
 	      _fep_output_string_from_pty (fep, buf, bytes_read - str1_len);
-	      _fep_output_draw_statusline (fep, fep->statusline);
+	      _fep_output_statusline (fep, fep->statusline);
 	      _fep_output_string_from_pty (fep, str1, str1_len);
 	    }
 	  else
@@ -467,17 +470,27 @@ void
 fep_free (Fep *fep)
 {
   int i;
+  char *p;
 
   reset_signal_handler ();
 
   if (fep->pty >= 0)
     close (fep->pty);
-  if (fep->server >= 0)
-    close (fep->server);
 
   for (i = 0; i < fep->n_clients; i++)
     if (fep->clients[i] >= 0)
       close (fep->clients[i]);
+
+  if (fep->server >= 0)
+    close (fep->server);
+
+  unlink (fep->control_socket_path);
+  p = strrchr (fep->control_socket_path, '/');
+  assert (p != NULL);
+  *p = '\0';
+
+  rmdir (fep->control_socket_path);
+  free (fep->control_socket_path);
 
   free (fep->statusline);
   free (fep);
