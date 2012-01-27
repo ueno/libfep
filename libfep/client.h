@@ -29,6 +29,8 @@ int        fep_client_set_cursor_text       (FepClient         *client,
                                              const char        *text);
 int        fep_client_set_status_text       (FepClient         *client,
                                              const char        *text);
+int        fep_client_forward_text          (FepClient         *client,
+                                             const char        *text);
 void       fep_client_set_key_event_handler (FepClient         *client,
                                              FepKeyEventHandler handler,
                                              void              *data);

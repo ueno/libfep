@@ -125,6 +125,12 @@ command_set_status_text (Fep *fep, FepControlMessage *message)
   _fep_output_status_text (fep, message->args[0]);
 }
 
+static void
+command_forward_text (Fep *fep, FepControlMessage *message)
+{
+  _fep_output_forward_text (fep, message->args[0]);
+}
+
 int
 _fep_dispatch_control_message (Fep *fep, int fd)
 {
@@ -136,6 +142,7 @@ _fep_dispatch_control_message (Fep *fep, int fd)
       {
 	{ FEP_CONTROL_SET_CURSOR_TEXT, command_set_cursor_text },
 	{ FEP_CONTROL_SET_STATUS_TEXT, command_set_status_text },
+	{ FEP_CONTROL_FORWARD_TEXT, command_forward_text },
       };
   FepControlMessage message;
   int i;

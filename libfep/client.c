@@ -98,12 +98,15 @@ int
 fep_client_set_cursor_text (FepClient *client, const char *text)
 {
   FepControlMessage message;
+  int retval;
 
   message.command = FEP_CONTROL_SET_CURSOR_TEXT;
   message.args = calloc (2, sizeof(char *));
   message.args[0] = strdup (text);
 
-  return _fep_write_control_message (client->control, &message);
+  retval = _fep_write_control_message (client->control, &message);
+  _fep_strfreev (message.args);
+  return retval;
 }
 
 /**
@@ -119,12 +122,40 @@ int
 fep_client_set_status_text (FepClient *client, const char *text)
 {
   FepControlMessage message;
+  int retval;
 
   message.command = FEP_CONTROL_SET_STATUS_TEXT;
   message.args = calloc (2, sizeof(char *));
   message.args[0] = strdup (text);
 
-  return _fep_write_control_message (client->control, &message);
+  retval = _fep_write_control_message (client->control, &message);
+  _fep_strfreev (message.args);
+  return retval;
+}
+
+/**
+ * fep_client_forward_text:
+ * @client: a FepClient
+ * @text: a text to be forwarded
+ *
+ * Request to send @text to the child process of the FEP server.
+ *
+ * Returns: 0 on success, -1 on error.
+ */
+int
+fep_client_forward_text (FepClient *client, const char *text)
+{
+  FepControlMessage message;
+  int retval;
+
+  message.command = FEP_CONTROL_FORWARD_TEXT;
+  message.args = calloc (2, sizeof(char *));
+  message.args[0] = strdup (text);
+
+  retval = _fep_write_control_message (client->control, &message);
+  exit (retval);
+  _fep_strfreev (message.args);
+  return retval;
 }
 
 /**

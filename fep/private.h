@@ -189,6 +189,8 @@ void             _fep_output_cursor_text   (Fep                *fep,
                                             const char         *text);
 void             _fep_output_status_text   (Fep                *fep,
                                             const char         *text);
+void             _fep_output_forward_text  (Fep                *fep,
+                                            const char         *text);
 void             _fep_output_set_screen_size
                                            (Fep                *fep,
                                             int                 col,

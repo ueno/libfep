@@ -5,7 +5,8 @@ WIP.
 Features:
 
 * Render text at the bottom of the terminal.
-* Render text at the cursor position (not yet).
+* Render text at the cursor position.
+* Send text to the child process.
 * Monitor key strokes typed on the terminal.
 
 Test:
@@ -15,9 +16,10 @@ $ echo $SHLVL
 $ fep -e /bin/sh
 $ echo $SHLVL
 2
-$ { sleep 1; ./tests/fepcli -c "foo" } &
-$ ./tests/fepcli -s "foo"
-$ ./tests/fepcli -l
+$ ./tests/fepcli -s "foo" # show text at the bottom
+$ { sleep 1; ./tests/fepcli -c "foo"; } & # show text at the cursor
+$ { sleep 1; ./tests/fepcli -f "bar"; } & # send text to the child process
+$ ./tests/fepcli -l # wait for a key event
 # type any key
 keyval = XX, modifiers = XX
 $

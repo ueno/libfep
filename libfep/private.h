@@ -66,13 +66,14 @@ char *  _fep_strtrunc      (const char *str,
                             int         width);
 
 /* control.c */
-typedef enum {
-  FEP_CONTROL_SET_STATUS = 1,
-  FEP_CONTROL_SET_CURSOR_TEXT = 2,
-  FEP_CONTROL_SET_STATUS_TEXT = 3,
-  FEP_CONTROL_KEY_EVENT = 4,
-  FEP_CONTROL_KEY_EVENT_RESPONSE = 5,
-} FepControlCommand;
+typedef enum
+  {
+    FEP_CONTROL_SET_CURSOR_TEXT = 1,
+    FEP_CONTROL_SET_STATUS_TEXT = 2,
+    FEP_CONTROL_FORWARD_TEXT = 3,
+    FEP_CONTROL_KEY_EVENT = 4,
+    FEP_CONTROL_KEY_EVENT_RESPONSE = 5
+  } FepControlCommand;
 
 struct _FepControlMessage
 {

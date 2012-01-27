@@ -31,6 +31,7 @@ static const struct
   {
     { FEP_CONTROL_SET_CURSOR_TEXT, 1 },
     { FEP_CONTROL_SET_STATUS_TEXT, 1 },
+    { FEP_CONTROL_FORWARD_TEXT, 1 },
     { FEP_CONTROL_KEY_EVENT, 2 },
     { FEP_CONTROL_KEY_EVENT_RESPONSE, 1 },
   };
@@ -139,7 +140,8 @@ _fep_write_control_message (int fd,
 		  total += bytes_written;
 		}
 	    }
+	  return 0;
 	}
     }
-  return 0;
+  return -1;
 }

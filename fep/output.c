@@ -267,10 +267,15 @@ _fep_output_cursor_text (Fep *fep, const char *text)
 	_fep_string_clear (&fep->ptybuf);
 
       apply_attr (fep, &fep->attr_tty);
-
       write (fep->tty_out, fep->cursor_text, strlen (fep->cursor_text));
       _fep_output_restore_cursor (fep);
     }
+}
+
+void
+_fep_output_forward_text (Fep *fep, const char *text)
+{
+  write (fep->pty, text, strlen (text));
 }
 
 void

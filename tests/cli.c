@@ -30,6 +30,7 @@ usage (FILE *out, const char *program_name)
 	   "where OPTIONS are:\n"
 	   "  -c, --cursor-text=TEXT\tRender text at the cursor position\n"
 	   "  -s, --status-text=TEXT\tRender text at the bottom\n"
+	   "  -f, --forward-text=TEXT\tSend text to the child process\n"
 	   "  -l, --listen-key-event\tListen to a new key event\n"
 	   "  -h, --help\tShow this help\n",
 	   program_name);
@@ -48,7 +49,7 @@ main (int argc, char **argv)
 {
   FepClient *client;
   int c;
-  char *cursor_text = NULL, *status_text = NULL;
+  char *cursor_text = NULL, *status_text = NULL, *forward_text = NULL;
   bool key_event = false;
 
   while (1)
@@ -58,11 +59,12 @@ main (int argc, char **argv)
 	{
 	  { "cursor-text", required_argument, 0, 'c' },
 	  { "status-text", required_argument, 0, 's' },
+	  { "forward-text", required_argument, 0, 'f' },
 	  { "listen-key-event", no_argument, 0, 'l' },
 	  { "help", no_argument, 0, 'h' },
 	  { NULL, 0, 0, 0 }
 	};
-      c = getopt_long (argc, argv, "c:s:lh",
+      c = getopt_long (argc, argv, "c:s:f:lh",
 		       long_options, &option_index);
       if (c == -1)
 	break;
@@ -74,6 +76,9 @@ main (int argc, char **argv)
 	  break;
 	case 's':
 	  status_text = optarg;
+	  break;
+	case 'f':
+	  forward_text = optarg;
 	  break;
 	case 'l':
 	  key_event = true;
@@ -95,7 +100,7 @@ main (int argc, char **argv)
       exit (1);
     }
 
-  if (!cursor_text && !status_text && !key_event)
+  if (!cursor_text && !status_text && !forward_text && !key_event)
     {
       fprintf (stderr, "No action specified\n");
       exit (1);
@@ -116,6 +121,11 @@ main (int argc, char **argv)
   else if (status_text && fep_client_set_status_text (client, status_text) < 0)
     {
       fprintf (stderr, "Can't set status text\n");
+      exit (1);
+    }
+  else if (forward_text && fep_client_forward_text (client, forward_text) < 0)
+    {
+      fprintf (stderr, "Can't send text\n");
       exit (1);
     }
   else if (key_event)
