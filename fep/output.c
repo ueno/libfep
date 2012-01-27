@@ -181,6 +181,39 @@ _fep_output_goto_status_text (Fep *fep, int col)
 }
 
 void
+_fep_output_cursor_address (Fep *fep, int row, int col)
+{
+  char *str = tparm (cursor_address, row, col);
+  _fep_putp (fep, str);
+  fep->cursor.row = row;
+  fep->cursor.col = col;
+}
+
+void
+_fep_output_save_cursor (Fep *fep)
+{
+  if (fep->has_cpr)
+    _fep_output_get_cursor_position (fep, &fep->cursor_save);
+  else
+    {
+      _fep_putp (fep, save_cursor);
+      memcpy (&fep->cursor_save, &fep->cursor, sizeof(FepPoint));
+    }
+}
+
+void
+_fep_output_restore_cursor (Fep *fep)
+{
+  if (fep->has_cpr)
+    _fep_output_cursor_address (fep, fep->cursor_save.row, fep->cursor_save.col);
+  else
+    {
+      _fep_putp (fep, restore_cursor);
+      memcpy (&fep->cursor, &fep->cursor_save, sizeof(FepPoint));
+    }
+}
+
+void
 _fep_output_status_text (Fep *fep, const char *text)
 {
 
@@ -203,49 +236,50 @@ _fep_output_cursor_text (Fep *fep, const char *text)
 {
   char *str;
 
-  _fep_putp (fep, save_cursor);
-
-  if (fep->cursor_text)
+  if (fep->cursor_text && *fep->cursor_text != '\0')
     {
       int width = _fep_strwidth (fep->cursor_text);
-      if (width > 0)
-	{
-	  str = tparm (cursor_address, fep->cursor.row, fep->cursor.col);
-	  _fep_putp (fep, str);
 
-	  str = malloc (width * sizeof(char));
-	  memset (str, ' ', width * sizeof(char));
-	  write (fep->tty_out, str, width * sizeof(char));
-	  free (fep->cursor_text);
-	  fep->cursor_text = NULL;
-	}
+      _fep_output_save_cursor (fep);
+      if (fep->has_cpr)
+	_fep_output_cursor_address (fep, fep->cursor.row, fep->cursor.col);
+
+      str = malloc (width * sizeof(char));
+      memset (str, ' ', width * sizeof(char));
+      write (fep->tty_out, str, width * sizeof(char));
+      free  (str);
+
+      free (fep->cursor_text);
+      fep->cursor_text = NULL;
+      _fep_output_restore_cursor (fep);
     }
 
-  if (*text != '\0' && _fep_output_get_cursor_position (fep, &fep->cursor))
+  if (*text != '\0')
     {
-      str = tparm (cursor_address, fep->cursor.row, fep->cursor.col);
-      _fep_putp (fep, str);
+      _fep_output_save_cursor (fep);
+
+      if (_fep_output_get_cursor_position (fep, &fep->cursor))
+	_fep_output_cursor_address (fep, fep->cursor.row, fep->cursor.col);
 
       fep->cursor_text = _fep_strtrunc (text,
 					fep->winsize.ws_col - fep->cursor.col);
-
       if (fep->ptybuf.len > 0)
 	_fep_string_clear (&fep->ptybuf);
 
       apply_attr (fep, &fep->attr_tty);
 
       write (fep->tty_out, fep->cursor_text, strlen (fep->cursor_text));
+      _fep_output_restore_cursor (fep);
     }
-  _fep_putp (fep, restore_cursor);
 }
 
 void
 _fep_output_set_screen_size (Fep *fep, int col, int row)
 {
-  _fep_putp (fep, save_cursor);
+  _fep_output_save_cursor (fep);
   _fep_output_change_scroll_region (fep, 0, row - 1);
   _fep_output_status_text (fep, fep->status_text);
-  _fep_putp (fep, restore_cursor);
+  _fep_output_restore_cursor (fep);
 }
 
 /* http://www.vt100.net/docs/vt510-rm/DSR-CPR */
@@ -326,23 +360,42 @@ _fep_output_init_screen (Fep *fep)
   str = tparm (clear_screen, 2);
   _fep_putp (fep, str);
 
+  _fep_putp (fep, cursor_invisible);
+  fep->cursor.row = fep->cursor.col = -1;
   fep->has_cpr = _fep_output_dsr_cpr (fep, &fep->cursor);
+  if (fep->has_cpr)
+    {
+      FepPoint cursor0, cursor1;
+
+      str = tparm (cursor_address, 1, 1);
+      _fep_putp (fep, str);
+      _fep_output_dsr_cpr (fep, &cursor0);
+
+      str = tparm (cursor_address, cursor0.row, cursor0.col);
+      _fep_putp (fep, str);
+      _fep_output_dsr_cpr (fep, &cursor1);
+
+      fep->cursor_diff.row = cursor1.row - cursor0.row;
+      fep->cursor_diff.col = cursor1.col - cursor0.col;
+
+      fep->cursor.row -= fep->cursor_diff.row;
+      fep->cursor.col -= fep->cursor_diff.col;
+
+      str = tparm (cursor_address, fep->cursor.row, fep->cursor.col);
+      _fep_putp (fep, str);
+    }
+  _fep_putp (fep, cursor_normal);
 
   _fep_output_status_text (fep, "");
 }
 
 bool
-_fep_output_get_cursor_position (Fep *fep, FepPoint *point)
+_fep_output_get_cursor_position (Fep *fep, FepPoint *cursor)
 {
-  if (fep->cursor.row >= 0 && fep->cursor.col >= 0)
+  if (fep->has_cpr && _fep_output_dsr_cpr (fep, cursor))
     {
-      memcpy (point, &fep->cursor, sizeof(FepPoint));
-      return true;
-    }
-
-  if (fep->has_cpr && _fep_output_dsr_cpr (fep, &fep->cursor))
-    {
-      memcpy (point, &fep->cursor, sizeof(FepPoint));
+      cursor->row -= fep->cursor_diff.row;
+      cursor->col -= fep->cursor_diff.col;
       return true;
     }
   return false;

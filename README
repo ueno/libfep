@@ -15,9 +15,10 @@ $ echo $SHLVL
 $ fep -e /bin/sh
 $ echo $SHLVL
 2
-$ ./tests/fepcli -c "foo"
+$ { sleep 1; ./tests/fepcli -c "foo" } &
 $ ./tests/fepcli -s "foo"
 $ ./tests/fepcli -l
+# type any key
 keyval = XX, modifiers = XX
 $
 

@@ -119,6 +119,8 @@ struct _Fep
 
   char *cursor_text;
   FepPoint cursor;
+  FepPoint cursor_save;
+  FepPoint cursor_diff;
   char *status_text;
 
   struct winsize winsize;
