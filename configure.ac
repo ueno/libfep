@@ -69,7 +69,19 @@ AC_SUBST([LT_CURRENT])
 AC_SUBST([LT_REVISION])
 AC_SUBST([LT_AGE])
 
-PKG_CHECK_MODULES([NCURSES], [ncurses])
+# check for ncurses
+PKG_CHECK_MODULES([NCURSES], [ncurses], ,
+  [AC_MSG_ERROR([can't find ncurses])])
+
+# check for gobject
+AC_ARG_ENABLE([glib],
+	AS_HELP_STRING([--enable-glib], [Enable glib binding]),
+	[enable_glib=$enableval], [enable_glib=auto])
+if test "x$enable_glib" != "xno"; then
+   AM_PATH_GLIB_2_0
+   PKG_CHECK_MODULES([GOBJECT], [gobject-2.0], enable_glib=yes, enable_glib=no)
+fi
+AM_CONDITIONAL([ENABLE_GLIB], [test "x$enable_glib" = "xyes"])
 
 # check for gtk-doc
 m4_ifdef([GTK_DOC_CHECK], [
@@ -78,12 +90,17 @@ GTK_DOC_CHECK([1.14],[--flavour no-tmpl])
 AM_CONDITIONAL([ENABLE_GTK_DOC], false)
 ])
 
+# check gobject introspection
+GOBJECT_INTROSPECTION_CHECK([0.9.0])
+
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile
 lib/Makefile
 fep/Makefile
 libfep/Makefile
 libfep/libfep.pc
+libfep-glib/Makefile
+libfep-glib/libfep-glib.pc
 tests/Makefile
 docs/Makefile
 docs/version.xml])

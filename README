@@ -1,7 +1,5 @@
 libfep -- a library to implement FEP (front end processor) on ANSI terminals
 
-WIP.
-
 Features:
 
 * Render text at the bottom of the terminal.

@@ -24,7 +24,7 @@ typedef int (*FepKeyEventHandler) (unsigned int key, FepModifierType modifiers,
 				   void *data);
 
 FepClient *fep_client_open                  (const char        *address);
-int        fep_client_get_poll_fd           (FepClient         *client);
+int        fep_client_get_key_event_poll_fd (FepClient         *client);
 int        fep_client_set_cursor_text       (FepClient         *client,
                                              const char        *text);
 int        fep_client_set_status_text       (FepClient         *client,
