@@ -55,7 +55,7 @@ G_DEFINE_TYPE_WITH_CODE (FepGClient, fep_g_client, G_TYPE_OBJECT,
 
 struct _FepGClientPrivate
 {
-  FepGClient *client;
+  FepClient *client;
   char *address;
 };
 
@@ -68,9 +68,7 @@ key_event_handler (unsigned int    keyval,
   gboolean retval;
   g_signal_emit (client, signals[KEY_EVENT_SIGNAL], 0,
 		 keyval, modifiers, &retval);
-  if (retval)
-    return 1;
-  return 0;
+  return retval ? 1 : 0;
 }
 
 static gboolean
@@ -190,11 +188,13 @@ fep_g_client_class_init (FepGClientClass *klass)
 		  G_TYPE_FROM_CLASS(gobject_class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET(FepGClientClass, key_event),
-		  NULL,
+		  g_signal_accumulator_true_handled,
 		  NULL,
 		  _fep_g_marshal_BOOLEAN__UINT_UINT,
-		  G_TYPE_NONE,
-		  0);
+		  G_TYPE_BOOLEAN,
+		  2,
+		  G_TYPE_UINT,
+		  G_TYPE_UINT);
 
   pspec = g_param_spec_string ("address",
 			       "address",

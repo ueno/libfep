@@ -67,12 +67,12 @@ endif
 
 if ENABLE_VALA
 vapidir = $(datadir)/vala/vapi
-dist_vapi_DATA = libfep-glib.vapi libfep-glib.deps
+vapi_DATA = libfep-glib.vapi
 
 libfep-glib.vapi: Fep@FEP_LIBRARY_SUFFIX@.gir
 	$(VAPIGEN) --pkg=gio-2.0 --library libfep-glib Fep-1.0.gir
 DISTCLEANFILES += libfep-glib.vapi
-EXTRA_DIST += Fep@FEP_LIBRARY_SUFFIX@.metadata
+EXTRA_DIST += Fep@FEP_LIBRARY_SUFFIX@.metadata libfep-glib.deps
 endif
 
 -include $(top_srcdir)/git.mk

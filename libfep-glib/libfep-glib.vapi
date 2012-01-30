@@ -2,7 +2,7 @@
 
 [CCode (cprefix = "Fep", gir_namespace = "Fep", gir_version = "1.0", lower_case_cprefix = "fep_")]
 namespace Fep {
-	[CCode (cheader_filename = "Fep-1.0.h", lower_case_csuffix = "g_client", type_id = "fep_g_client_get_type ()")]
+	[CCode (cheader_filename = "libfep-glib/libfep-glib.h", lower_case_csuffix = "g_client", type_id = "fep_g_client_get_type ()")]
 	public class GClient : GLib.Object, GLib.Initable {
 		[CCode (has_construct_function = false)]
 		public GClient (string? address, GLib.Cancellable? cancellable) throws GLib.Error;
