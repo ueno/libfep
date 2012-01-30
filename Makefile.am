@@ -44,6 +44,7 @@ GITIGNOREFILES =				\
 	m4					\
 	lib					\
 	snippet					\
+	gtk-doc.make				\
 	$(top_builddir)/lcov.html/*		\
 	$(NULL)
 

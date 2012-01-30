@@ -18,8 +18,8 @@ lib_LTLIBRARIES = libfep-glib.la
 
 libfep_glib_la_sources = fepgclient.c
 libfep_glib_la_SOURCES = fepgmarshalers.c $(libfep_glib_la_sources)
-libfep_glib_la_CFLAGS = $(GOBJECT_CFLAGS) -I$(top_srcdir)
-libfep_glib_la_LIBADD = $(GOBJECT_LIBS) $(top_builddir)/libfep/libfep.la
+libfep_glib_la_CFLAGS = $(GIO_CFLAGS) -I$(top_srcdir)
+libfep_glib_la_LIBADD = $(GIO_LIBS) $(top_builddir)/libfep/libfep.la
 
 libfepglibincludedir = $(includedir)/libfep-glib
 libfepglibinclude_HEADERS = libfep-glib.h fepgclient.h

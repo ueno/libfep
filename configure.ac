@@ -79,7 +79,7 @@ AC_ARG_ENABLE([glib],
 	[enable_glib=$enableval], [enable_glib=auto])
 if test "x$enable_glib" != "xno"; then
    AM_PATH_GLIB_2_0
-   PKG_CHECK_MODULES([GOBJECT], [gobject-2.0], enable_glib=yes, enable_glib=no)
+   PKG_CHECK_MODULES([GIO], [gio-2.0], enable_glib=yes, enable_glib=no)
 fi
 AM_CONDITIONAL([ENABLE_GLIB], [test "x$enable_glib" = "xyes"])
 
@@ -103,5 +103,8 @@ libfep-glib/Makefile
 libfep-glib/libfep-glib.pc
 tests/Makefile
 docs/Makefile
-docs/version.xml])
+docs/libfep/Makefile
+docs/libfep/version.xml
+docs/libfep-glib/Makefile
+docs/libfep-glib/version.xml])
 AC_OUTPUT
