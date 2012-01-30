@@ -71,7 +71,7 @@ dist_vapi_DATA = libfep-glib.vapi libfep-glib.deps
 
 libfep-glib.vapi: Fep@FEP_LIBRARY_SUFFIX@.gir
 	$(VAPIGEN) --pkg=gio-2.0 --library libfep-glib Fep-1.0.gir
-DISTCLEANFILES += $(dist_vapi_DATA)
+DISTCLEANFILES += libfep-glib.vapi
 EXTRA_DIST += Fep@FEP_LIBRARY_SUFFIX@.metadata
 endif
 
