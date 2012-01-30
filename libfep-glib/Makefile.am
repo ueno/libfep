@@ -26,16 +26,18 @@ libfepglibinclude_HEADERS = libfep-glib.h fepgclient.h
 noinst_HEADERS = fepgmarshalers.h
 
 # gen marshal
-fepgmarshalers.h: fepgmarshalers.list
+fepgmarshalers.h: $(srcdir)/fepgmarshalers.list
 	$(AM_V_GEN) $(GLIB_GENMARSHAL) --prefix=_fep_g_marshal $(srcdir)/fepgmarshalers.list --header --internal > $@.tmp && \
 	mv $@.tmp $@
 
-fepgmarshalers.c: fepgmarshalers.list fepgmarshalers.h
+fepgmarshalers.c: $(srcdir)/fepgmarshalers.list fepgmarshalers.h
 	$(AM_V_GEN) (echo "#include \"fepgmarshalers.h\""; \
 	$(GLIB_GENMARSHAL) --prefix=_fep_g_marshal $(srcdir)/fepgmarshalers.list --body --internal) > $@.tmp && \
 	mv $@.tmp $@
 
 DISTCLEANFILES = fepgmarshalers.h fepgmarshalers.c
+CLEANFILES =
+EXTRA_DIST =
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libfep-glib.pc
@@ -45,11 +47,9 @@ INTROSPECTION_GIRS =
 INTROSPECTION_SCANNER_ARGS = --add-include-path=$(builddir)
 INTROSPECTION_COMPILER_ARGS = --includedir=$(srcdir)
 
-CLEANFILES =
-
 if HAVE_INTROSPECTION
 Fep@FEP_LIBRARY_SUFFIX@.gir: libfep-glib.la
-Fep@FEP_LIBRARY_SUFFIX_U@_gir_SCANNERFLAGS = --pkg=glib-2.0
+Fep@FEP_LIBRARY_SUFFIX_U@_gir_SCANNERFLAGS = --pkg=libfep-glib
 Fep@FEP_LIBRARY_SUFFIX_U@_gir_INCLUDES = GLib-2.0 GObject-2.0 Gio-2.0
 Fep@FEP_LIBRARY_SUFFIX_U@_gir_CFLAGS = $(libfep_glib_la_CFLAGS)
 Fep@FEP_LIBRARY_SUFFIX_U@_gir_LIBS = libfep-glib.la
@@ -63,6 +63,16 @@ typelibdir = $(libdir)/girepository-1.0
 typelib_DATA = $(INTROSPECTION_GIRS:.gir=.typelib)
 
 CLEANFILES += $(gir_DATA) $(typelib_DATA)
+endif
+
+if ENABLE_VALA
+vapidir = $(datadir)/vala/vapi
+dist_vapi_DATA = libfep-glib.vapi libfep-glib.deps
+
+libfep-glib.vapi: Fep@FEP_LIBRARY_SUFFIX@.gir
+	$(VAPIGEN) --pkg=gio-2.0 --library libfep-glib Fep-1.0.gir
+DISTCLEANFILES += $(dist_vapi_DATA)
+EXTRA_DIST += Fep@FEP_LIBRARY_SUFFIX@.metadata
 endif
 
 -include $(top_srcdir)/git.mk

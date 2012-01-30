@@ -93,6 +93,16 @@ AM_CONDITIONAL([ENABLE_GTK_DOC], false)
 # check gobject introspection
 GOBJECT_INTROSPECTION_CHECK([0.9.0])
 
+# check vapigen
+if test "x$found_introspection" = "xyes"; then
+  AC_PATH_PROG([VAPIGEN], [vapigen], [false])
+  if test "x$VAPIGEN" != "xfalse"; then
+    enable_vala=yes
+  fi
+  AC_SUBST(VAPIGEN)
+fi
+AM_CONDITIONAL(ENABLE_VALA, [test "x$enable_vala" = "xyes"])
+
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile
 lib/Makefile

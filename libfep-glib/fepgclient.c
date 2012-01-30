@@ -24,6 +24,11 @@
 #include <libfep-glib/fepgmarshalers.h>
 #include <libfep/libfep.h>
 
+/**
+ * SECTION:fepgclient
+ * @short_description: Client connection to FEP server
+ */
+
 enum
   {
     PROP_0,
@@ -50,7 +55,7 @@ G_DEFINE_TYPE_WITH_CODE (FepGClient, fep_g_client, G_TYPE_OBJECT,
 
 struct _FepGClientPrivate
 {
-  FepClient *client;
+  FepGClient *client;
   char *address;
 };
 
@@ -172,6 +177,14 @@ fep_g_client_class_init (FepGClientClass *klass)
   gobject_class->get_property = fep_g_client_get_property;
   gobject_class->finalize = fep_g_client_finalize;
 
+  /**
+   * FepGClient::key-event:
+   * @client: a #FepGClient
+   * @keyval: a keyval
+   * @modifiers: modifier mask
+   *
+   * The ::key-event signal is emitted when key event is dispatched.
+   */
   signals[KEY_EVENT_SIGNAL] =
     g_signal_new (I_("key-event"),
 		  G_TYPE_FROM_CLASS(gobject_class),
@@ -202,6 +215,18 @@ fep_g_client_init (FepGClient *client)
   client->priv = FEP_G_CLIENT_GET_PRIVATE (client);
 }
 
+/**
+ * fep_g_client_new:
+ * @address: (allow-none): socket address of the FEP server
+ * @cancellable: a #GCancellable or %NULL
+ * @error: a pointer to a NULL #GError, or %NULL
+ *
+ * Connect to the FEP server running at @address.  If @address is
+ * %NULL, it gets the address from the environment variable
+ * `LIBFEP_CONTROL_SOCK`.
+ *
+ * Returns: a new FepGClient.
+ */
 FepGClient *
 fep_g_client_new (const char   *address,
                   GCancellable *cancellable,
@@ -214,40 +239,87 @@ fep_g_client_new (const char   *address,
 			 NULL);
 }
 
-int
+/**
+ * fep_g_client_set_cursor_text:
+ * @client: a #FepGClient
+ * @text: a cursor text
+ *
+ * Request to display @text at the cursor position on the terminal.
+ *
+ * Returns: %TRUE if success, %FALSE on error.
+ */
+gboolean
+fep_g_client_set_cursor_text (FepGClient *client,
+                              const char *text)
+{
+  FepGClientPrivate *priv = FEP_G_CLIENT_GET_PRIVATE (client);
+  gint retval = fep_client_set_cursor_text (priv->client, text);
+  return retval == 0;
+}
+
+/**
+ * fep_g_client_set_status_text:
+ * @client: a #FepGClient
+ * @text: a status text
+ *
+ * Request to display @text at the bottom of the terminal.
+ *
+ * Returns: %TRUE if success, %FALSE on error.
+ */
+gboolean
+fep_g_client_set_status_text (FepGClient *client,
+                              const char *text)
+{
+  FepGClientPrivate *priv = FEP_G_CLIENT_GET_PRIVATE (client);
+  gint retval = fep_client_set_status_text (priv->client, text);
+  return retval == 0;
+}
+
+/**
+ * fep_g_client_forward_text:
+ * @client: a #FepGClient
+ * @text: a text to be forwarded
+ *
+ * Request to send @text to the child process of the FEP server.
+ *
+ * Returns: %TRUE if success, %FALSE on error.
+ */
+gboolean
+fep_g_client_forward_text (FepGClient *client,
+                           const char *text)
+{
+  FepGClientPrivate *priv = FEP_G_CLIENT_GET_PRIVATE (client);
+  gint retval = fep_client_forward_text (priv->client, text);
+  return retval == 0;
+}
+
+/**
+ * fep_g_client_get_key_event_poll_fd:
+ * @client: a FepGClient
+ *
+ * Get the file descriptor of the control socket which can be used by poll().
+ *
+ * Returns: a file descriptor
+ */
+gint
 fep_g_client_get_key_event_poll_fd (FepGClient *client)
 {
   FepGClientPrivate *priv = FEP_G_CLIENT_GET_PRIVATE (client);
   return fep_client_get_key_event_poll_fd (priv->client);
 }
 
-int
-fep_g_client_set_cursor_text (FepGClient *client,
-                              const char *text)
-{
-  FepGClientPrivate *priv = FEP_G_CLIENT_GET_PRIVATE (client);
-  return fep_client_set_cursor_text (priv->client, text);
-}
-
-int
-fep_g_client_set_status_text (FepGClient *client,
-                              const char *text)
-{
-  FepGClientPrivate *priv = FEP_G_CLIENT_GET_PRIVATE (client);
-  return fep_client_set_status_text (priv->client, text);
-}
-
-int
-fep_g_client_forward_text (FepGClient *client,
-                           const char *text)
-{
-  FepGClientPrivate *priv = FEP_G_CLIENT_GET_PRIVATE (client);
-  return fep_client_forward_text (priv->client, text);
-}
-
-int
+/**
+ * fep_g_client_dispatch_key_event:
+ * @client: a #FepGClient
+ *
+ * Dispatch a key event.
+ *
+ * Returns: %TRUE if success, %FALSE on error.
+ */
+gboolean
 fep_g_client_dispatch_key_event (FepGClient *client)
 {
   FepGClientPrivate *priv = FEP_G_CLIENT_GET_PRIVATE (client);
-  return fep_client_dispatch_key_event (priv->client);
+  gint retval = fep_client_dispatch_key_event (priv->client);
+  return retval == 0;
 }
