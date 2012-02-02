@@ -47,7 +47,8 @@ struct _FepGClientClass {
 
   /*< public >*/
   /* signals */
-  gboolean (*key_event) (FepGClient *client, guint keyval, guint modifiers);
+  gboolean (*filter_key_event) (FepGClient *client, guint keyval, guint modifiers);
+  void (*process_key_event) (FepGClient *client, guint keyval, guint modifiers);
 
   /*< private >*/
   gpointer padding[32];
@@ -57,12 +58,13 @@ GType        fep_g_client_get_type              (void) G_GNUC_CONST;
 FepGClient * fep_g_client_new                   (const char   *address,
                                                  GCancellable *cancellable,
                                                  GError      **error);
-gboolean     fep_g_client_set_cursor_text       (FepGClient   *client,
+void         fep_g_client_set_cursor_text       (FepGClient   *client,
                                                  const char   *text);
-gboolean     fep_g_client_set_status_text       (FepGClient   *client,
+void         fep_g_client_set_status_text       (FepGClient   *client,
                                                  const char   *text);
-gboolean     fep_g_client_forward_text          (FepGClient   *client,
-                                                 const char   *text);
+void         fep_g_client_send_data             (FepGClient   *client,
+                                                 const char   *data,
+                                                 gsize         length);
 gint         fep_g_client_get_key_event_poll_fd (FepGClient   *client);
 gboolean     fep_g_client_dispatch_key_event    (FepGClient   *client);
 

@@ -37,7 +37,8 @@ enum
 
 enum
   {
-    KEY_EVENT_SIGNAL,
+    FILTER_KEY_EVENT_SIGNAL,
+    PROCESS_KEY_EVENT_SIGNAL,
     LAST_SIGNAL
   };
 
@@ -60,15 +61,25 @@ struct _FepGClientPrivate
 };
 
 static int
+key_event_filter (unsigned int    keyval,
+		  FepModifierType modifiers,
+		  void           *data)
+{
+  FepGClient *client = FEP_G_CLIENT (data);
+  gboolean retval;
+  g_signal_emit (client, signals[FILTER_KEY_EVENT_SIGNAL], 0,
+		 keyval, modifiers, &retval);
+  return retval ? 1 : 0;
+}
+
+static void
 key_event_handler (unsigned int    keyval,
                    FepModifierType modifiers,
                    void           *data)
 {
   FepGClient *client = FEP_G_CLIENT (data);
-  gboolean retval;
-  g_signal_emit (client, signals[KEY_EVENT_SIGNAL], 0,
-		 keyval, modifiers, &retval);
-  return retval ? 1 : 0;
+  g_signal_emit (client, signals[PROCESS_KEY_EVENT_SIGNAL], 0,
+		 keyval, modifiers);
 }
 
 static gboolean
@@ -82,9 +93,16 @@ initable_init (GInitable    *initable,
   priv->client = fep_client_open (priv->address);
   if (priv->client)
     {
+      fep_client_set_key_event_filter (priv->client,
+				       (FepKeyEventFilter) key_event_filter,
+				       client);
       fep_client_set_key_event_handler (priv->client,
-					key_event_handler,
+					(FepKeyEventHandler) key_event_handler,
 					client);
+#ifdef DEBUG
+      fep_set_log_file ("fepgclient.log");
+      fep_set_log_level (FEP_LOG_LEVEL_DEBUG);
+#endif
       return TRUE;
     }
   return FALSE;
@@ -97,12 +115,20 @@ initable_iface_init (GInitableIface *initable_iface)
 }
 
 static gboolean
-fep_g_client_real_key_event (FepGClient *client,
-                             guint       keyval,
-                             guint       modifiers)
+fep_g_client_real_filter_key_event (FepGClient *client,
+				    guint       keyval,
+				    guint       modifiers)
 {
   /* g_debug ("%u %u", keyval, modifiers); */
   return FALSE;
+}
+
+static void
+fep_g_client_real_process_key_event (FepGClient *client,
+				     guint       keyval,
+				     guint       modifiers)
+{
+  /* g_debug ("%u %u", keyval, modifiers); */
 }
 
 static void
@@ -170,28 +196,51 @@ fep_g_client_class_init (FepGClientClass *klass)
   g_type_class_add_private (gobject_class,
 			    sizeof (FepGClientPrivate));
 
-  klass->key_event = fep_g_client_real_key_event;
+  klass->filter_key_event = fep_g_client_real_filter_key_event;
+  klass->process_key_event = fep_g_client_real_process_key_event;
+
   gobject_class->set_property = fep_g_client_set_property;
   gobject_class->get_property = fep_g_client_get_property;
   gobject_class->finalize = fep_g_client_finalize;
 
   /**
-   * FepGClient::key-event:
+   * FepGClient::filter-key-event:
    * @client: a #FepGClient
    * @keyval: a keyval
    * @modifiers: modifier mask
    *
-   * The ::key-event signal is emitted when key event is dispatched.
+   * The ::filter-key-event signal is emitted when key event is dispatched.
    */
-  signals[KEY_EVENT_SIGNAL] =
-    g_signal_new (I_("key-event"),
+  signals[FILTER_KEY_EVENT_SIGNAL] =
+    g_signal_new (I_("filter-key-event"),
 		  G_TYPE_FROM_CLASS(gobject_class),
 		  G_SIGNAL_RUN_LAST,
-		  G_STRUCT_OFFSET(FepGClientClass, key_event),
+		  G_STRUCT_OFFSET(FepGClientClass, filter_key_event),
 		  g_signal_accumulator_true_handled,
 		  NULL,
 		  _fep_g_marshal_BOOLEAN__UINT_UINT,
 		  G_TYPE_BOOLEAN,
+		  2,
+		  G_TYPE_UINT,
+		  G_TYPE_UINT);
+
+  /**
+   * FepGClient::process-key-event:
+   * @client: a #FepGClient
+   * @keyval: a keyval
+   * @modifiers: modifier mask
+   *
+   * The ::process-key-event signal is emitted when key event is dispatched.
+   */
+  signals[PROCESS_KEY_EVENT_SIGNAL] =
+    g_signal_new (I_("process-key-event"),
+		  G_TYPE_FROM_CLASS(gobject_class),
+		  G_SIGNAL_RUN_LAST,
+		  G_STRUCT_OFFSET(FepGClientClass, process_key_event),
+		  NULL,
+		  NULL,
+		  _fep_g_marshal_VOID__UINT_UINT,
+		  G_TYPE_NONE,
 		  2,
 		  G_TYPE_UINT,
 		  G_TYPE_UINT);
@@ -245,16 +294,13 @@ fep_g_client_new (const char   *address,
  * @text: a cursor text
  *
  * Request to display @text at the cursor position on the terminal.
- *
- * Returns: %TRUE if success, %FALSE on error.
  */
-gboolean
+void
 fep_g_client_set_cursor_text (FepGClient *client,
                               const char *text)
 {
   FepGClientPrivate *priv = FEP_G_CLIENT_GET_PRIVATE (client);
-  gint retval = fep_client_set_cursor_text (priv->client, text);
-  return retval == 0;
+  fep_client_set_cursor_text (priv->client, text);
 }
 
 /**
@@ -263,34 +309,30 @@ fep_g_client_set_cursor_text (FepGClient *client,
  * @text: a status text
  *
  * Request to display @text at the bottom of the terminal.
- *
- * Returns: %TRUE if success, %FALSE on error.
  */
-gboolean
+void
 fep_g_client_set_status_text (FepGClient *client,
                               const char *text)
 {
   FepGClientPrivate *priv = FEP_G_CLIENT_GET_PRIVATE (client);
-  gint retval = fep_client_set_status_text (priv->client, text);
-  return retval == 0;
+  fep_client_set_status_text (priv->client, text);
 }
 
 /**
- * fep_g_client_forward_text:
+ * fep_g_client_send_data:
  * @client: a #FepGClient
- * @text: a text to be forwarded
+ * @data: data to be sent
+ * @length: length of @data
  *
- * Request to send @text to the child process of the FEP server.
- *
- * Returns: %TRUE if success, %FALSE on error.
+ * Request to send @data to the child process of the FEP server.
  */
-gboolean
-fep_g_client_forward_text (FepGClient *client,
-                           const char *text)
+void
+fep_g_client_send_data (FepGClient *client,
+                        const char *data,
+                        gsize       length)
 {
   FepGClientPrivate *priv = FEP_G_CLIENT_GET_PRIVATE (client);
-  gint retval = fep_client_forward_text (priv->client, text);
-  return retval == 0;
+  fep_client_send_data (priv->client, data, length);
 }
 
 /**

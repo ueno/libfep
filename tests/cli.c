@@ -16,11 +16,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <unistd.h>
 #include <libfep/libfep.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <getopt.h>
+#include <string.h>
 
 static void
 usage (FILE *out, const char *program_name)
@@ -30,17 +32,18 @@ usage (FILE *out, const char *program_name)
 	   "where OPTIONS are:\n"
 	   "  -c, --cursor-text=TEXT\tRender text at the cursor position\n"
 	   "  -s, --status-text=TEXT\tRender text at the bottom\n"
-	   "  -f, --forward-text=TEXT\tSend text to the child process\n"
-	   "  -l, --listen-key-event\tListen to a new key event\n"
+	   "  -d, --send-data=DATA\tSend text to the child process\n"
+	   "  -k, --listen-key-event\tListen to a new key event\n"
+	   "  -l, --log-file=FILE\tLog file\n"
 	   "  -h, --help\tShow this help\n",
 	   program_name);
 }
 
 static int
-key_event_handler (unsigned int key, FepModifierType modifiers)
+key_event_filter (unsigned int keyval, FepModifierType modifiers)
 {
-  printf ("key = %u, modifiers = %u\n",
-	  key, modifiers);
+  printf ("keyval = %u, modifiers = %u\n",
+	  keyval, modifiers);
   return 1;
 }
 
@@ -49,7 +52,7 @@ main (int argc, char **argv)
 {
   FepClient *client;
   int c;
-  char *cursor_text = NULL, *status_text = NULL, *forward_text = NULL;
+  char *cursor_text = NULL, *status_text = NULL, *send_data = NULL, *log_file = NULL;
   bool key_event = false;
 
   while (1)
@@ -59,12 +62,13 @@ main (int argc, char **argv)
 	{
 	  { "cursor-text", required_argument, 0, 'c' },
 	  { "status-text", required_argument, 0, 's' },
-	  { "forward-text", required_argument, 0, 'f' },
-	  { "listen-key-event", no_argument, 0, 'l' },
+	  { "send-data", required_argument, 0, 'd' },
+	  { "listen-key-event", no_argument, 0, 'k' },
+	  { "log-file", no_argument, 0, 'l' },
 	  { "help", no_argument, 0, 'h' },
 	  { NULL, 0, 0, 0 }
 	};
-      c = getopt_long (argc, argv, "c:s:f:lh",
+      c = getopt_long (argc, argv, "c:s:d:kl:h",
 		       long_options, &option_index);
       if (c == -1)
 	break;
@@ -77,11 +81,14 @@ main (int argc, char **argv)
 	case 's':
 	  status_text = optarg;
 	  break;
-	case 'f':
-	  forward_text = optarg;
+	case 'd':
+	  send_data = optarg;
+	  break;
+	case 'k':
+	  key_event = true;
 	  break;
 	case 'l':
-	  key_event = true;
+	  log_file = optarg;
 	  break;
 	case 'h':
 	  usage (stdout, argv[0]);
@@ -100,10 +107,16 @@ main (int argc, char **argv)
       exit (1);
     }
 
-  if (!cursor_text && !status_text && !forward_text && !key_event)
+  if (!cursor_text && !status_text && !send_data && !key_event)
     {
       fprintf (stderr, "No action specified\n");
       exit (1);
+    }
+
+  if (log_file != NULL)
+    {
+      fep_set_log_file (log_file);
+      fep_set_log_level (FEP_LOG_LEVEL_DEBUG);
     }
 
   client = fep_client_open (NULL);
@@ -113,26 +126,26 @@ main (int argc, char **argv)
       exit (1);
     }
 
-  if (cursor_text && fep_client_set_cursor_text (client, cursor_text) < 0)
+  if (cursor_text)
     {
-      fprintf (stderr, "Can't set cursor text\n");
-      exit (1);
+      fep_client_set_cursor_text (client, cursor_text);
+      exit (0);
     }
-  else if (status_text && fep_client_set_status_text (client, status_text) < 0)
+  else if (status_text)
     {
-      fprintf (stderr, "Can't set status text\n");
-      exit (1);
+      fep_client_set_status_text (client, status_text);
+      exit (0);
     }
-  else if (forward_text && fep_client_forward_text (client, forward_text) < 0)
+  else if (send_data)
     {
-      fprintf (stderr, "Can't send text\n");
-      exit (1);
+      fep_client_send_data (client, send_data, strlen (send_data));
+      exit (0);
     }
   else if (key_event)
     {
-      fep_client_set_key_event_handler (client,
-					(FepKeyEventHandler) key_event_handler,
-					NULL);
+      fep_client_set_key_event_filter (client,
+				       (FepKeyEventFilter) key_event_filter,
+				       NULL);
       printf ("# type any key\n");
       if (fep_client_dispatch_key_event (client) < 0)
 	{

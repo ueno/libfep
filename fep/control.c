@@ -1,36 +1,21 @@
 /*
+ * Copyright (C) 2012 Daiki Ueno <ueno@unixuser.org>
+ * Copyright (C) 2012 Red Hat, Inc.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
-  Copyright (c) 2012 Daiki Ueno <ueno@unixuser.org>
-  Copyright (c) 2012 Red Hat, Inc.
-
-  Redistribution and use in source and binary forms, with or without
-  modification, are permitted provided that the following conditions
-  are met:
-
-  1. Redistributions of source code must retain the above copyright
-     notice, this list of conditions and the following disclaimer.
-  2. Redistributions in binary form must reproduce the above copyright
-     notice, this list of conditions and the following disclaimer in the
-     documentation and/or other materials provided with the distribution.
-  3. Neither the name of authors nor the names of its contributors
-     may be used to endorse or promote products derived from this software
-     without specific prior written permission.
-
-  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS ``AS IS'' AND
-  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-  ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE
-  FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
-  OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-  HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-  OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-  SUCH DAMAGE.
-
-*/
-
-#include <libfep/libfep.h>
 #include "private.h"
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -114,21 +99,34 @@ _fep_open_control_socket (const char *template, char **r_path)
 }
 
 static void
-command_set_cursor_text (Fep *fep, FepControlMessage *message)
+command_set_cursor_text (Fep *fep,
+			 FepControlMessage *request)
 {
-  _fep_output_cursor_text (fep, message->args[0]);
+  _fep_output_cursor_text (fep, request->args[0].str);
 }
 
 static void
-command_set_status_text (Fep *fep, FepControlMessage *message)
+command_set_status_text (Fep *fep,
+			 FepControlMessage *request)
 {
-  _fep_output_status_text (fep, message->args[0]);
+  _fep_output_status_text (fep, request->args[0].str);
 }
 
 static void
-command_forward_text (Fep *fep, FepControlMessage *message)
+command_send_data (Fep *fep,
+		   FepControlMessage *request)
 {
-  _fep_output_forward_text (fep, message->args[0]);
+  ssize_t total = 0;
+
+  while (total < request->args[0].len)
+    {
+      ssize_t bytes_sent = _fep_output_send_data (fep,
+						  request->args[0].str + total,
+						  request->args[0].len - total);
+      if (bytes_sent < 0)
+	break;
+      total += bytes_sent;
+    }
 }
 
 int
@@ -137,17 +135,18 @@ _fep_dispatch_control_message (Fep *fep, int fd)
   static const struct
   {
     int command;
-    void (*handler) (Fep *fep, FepControlMessage *message);
+    void (*handler) (Fep *fep,
+		     FepControlMessage *request);
   } handlers[] =
       {
 	{ FEP_CONTROL_SET_CURSOR_TEXT, command_set_cursor_text },
 	{ FEP_CONTROL_SET_STATUS_TEXT, command_set_status_text },
-	{ FEP_CONTROL_FORWARD_TEXT, command_forward_text },
+	{ FEP_CONTROL_SEND_DATA, command_send_data },
       };
-  FepControlMessage message;
+  FepControlMessage request;
   int i;
 
-  if (_fep_read_control_message (fd, &message) < 0)
+  if (_fep_read_control_message (fd, &request) < 0)
     {
       for (i = 0; i < fep->n_clients; i++)
 	if (fep->clients[i] == fd)
@@ -163,13 +162,19 @@ _fep_dispatch_control_message (Fep *fep, int fd)
       return -1;
     }
 
-  for (i = 0; i < SIZEOF (handlers); i++)
+  for (i = 0;
+       i < SIZEOF (handlers) && handlers[i].command != request.command;
+       i++)
+    ;
+  if (i == SIZEOF (handlers))
     {
-      if (handlers[i].command == message.command)
-	{
-	  handlers[i].handler (fep, &message);
-	  _fep_strfreev (message.args);
-	}
+      fep_log (FEP_LOG_LEVEL_WARNING,
+	       "no handler defined for %d", request.command);
+      return -1;
     }
+
+  handlers[i].handler (fep, &request);
+  _fep_control_message_free_args (&request);
+
   return 0;
 }

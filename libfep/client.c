@@ -16,7 +16,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <libfep/libfep.h>
 #include <libfep/private.h>
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -30,30 +29,14 @@
  * @short_description: Client connection to FEP server
  */
 
-struct _FepQueue
-{
-  struct _FepQueue *next;
-  void *data;
-};
-typedef struct _FepQueue FepQueue;
-
 struct _FepClient
 {
   int control;
+  FepKeyEventFilter key_event_filter;
+  void *key_event_filter_data;
   FepKeyEventHandler key_event_handler;
   void *key_event_handler_data;
-  int key_event_handling;
-  FepQueue *messages;
 };
-
-static FepQueue *
-enqueue_message (FepQueue *queue, FepControlMessage *message)
-{
-  FepQueue *head = calloc (1, sizeof(FepQueue));
-  head->data = message;
-  head->next = queue;
-  return head;
-}
 
 /**
  * fep_client_open:
@@ -100,8 +83,6 @@ fep_client_open (const char *address)
       return NULL;
     }
 
-  client->messages = NULL;
-
   return client;
 }
 
@@ -111,30 +92,19 @@ fep_client_open (const char *address)
  * @text: a cursor text
  *
  * Request to display @text at the cursor position on the terminal.
- *
- * Returns: 0 on success, -1 on error.
  */
-int
+void
 fep_client_set_cursor_text (FepClient *client, const char *text)
 {
-  FepControlMessage *message;
-  int retval;
+  FepControlMessage message;
 
-  message = calloc (1, sizeof(FepControlMessage));
-  message->command = FEP_CONTROL_SET_CURSOR_TEXT;
-  message->args = calloc (2, sizeof(char *));
-  message->args[0] = strdup (text);
+  message.command = FEP_CONTROL_SET_CURSOR_TEXT;
+  _fep_control_message_alloc_args (&message, 1);
+  message.args[0].str = strdup (text);
+  message.args[0].len = strlen (text) + 1; /* NULL terminate */
 
-  if (client->key_event_handling)
-    {
-      client->messages = enqueue_message (client->messages, message);
-      return 0;
-    }
-
-  retval = _fep_write_control_message (client->control, message);
-  _fep_strfreev (message->args);
-  free (message);
-  return retval;
+  _fep_write_control_message (client->control, &message);
+  _fep_control_message_free_args (&message);
 }
 
 /**
@@ -143,62 +113,60 @@ fep_client_set_cursor_text (FepClient *client, const char *text)
  * @text: a status text
  *
  * Request to display @text at the bottom of the terminal.
- *
- * Returns: 0 on success, -1 on error.
  */
-int
+void
 fep_client_set_status_text (FepClient *client, const char *text)
 {
-  FepControlMessage *message;
-  int retval;
+  FepControlMessage message;
 
-  message = calloc (1, sizeof(FepControlMessage));
-  message->command = FEP_CONTROL_SET_STATUS_TEXT;
-  message->args = calloc (2, sizeof(char *));
-  message->args[0] = strdup (text);
+  message.command = FEP_CONTROL_SET_STATUS_TEXT;
+  _fep_control_message_alloc_args (&message, 1);
+  message.args[0].str = strdup (text);
+  message.args[0].len = strlen (text) + 1; /* NULL terminate */
 
-  if (client->key_event_handling)
-    {
-      client->messages = enqueue_message (client->messages, message);
-      return 0;
-    }
-
-  retval = _fep_write_control_message (client->control, message);
-  _fep_strfreev (message->args);
-  free (message);
-  return retval;
+  _fep_write_control_message (client->control, &message);
+  _fep_control_message_free_args (&message);
 }
 
 /**
- * fep_client_forward_text:
- * @client: a FepClient
- * @text: a text to be forwarded
+ * fep_client_send_data:
+ * @client: a #FepClient
+ * @data: data to be sent
+ * @length: length of @data
  *
- * Request to send @text to the child process of the FEP server.
- *
- * Returns: 0 on success, -1 on error.
+ * Request to send @data to the child process of the FEP server.
  */
-int
-fep_client_forward_text (FepClient *client, const char *text)
+void
+fep_client_send_data (FepClient *client, const char *data, size_t length)
 {
-  FepControlMessage *message;
-  int retval;
+  FepControlMessage message;
 
-  message = calloc (1, sizeof(FepControlMessage));
-  message->command = FEP_CONTROL_FORWARD_TEXT;
-  message->args = calloc (2, sizeof(char *));
-  message->args[0] = strdup (text);
+  message.command = FEP_CONTROL_SEND_DATA;
+  _fep_control_message_alloc_args (&message, 1);
+  message.args[0].str = malloc (length * sizeof(char));
+  memcpy (message.args[0].str, data, length);
+  message.args[0].len = length;
 
-  if (client->key_event_handling)
-    {
-      client->messages = enqueue_message (client->messages, message);
-      return 0;
-    }
+  _fep_write_control_message (client->control, &message);
+  _fep_control_message_free_args (&message);
+}
 
-  retval = _fep_write_control_message (client->control, message);
-  _fep_strfreev (message->args);
-  free (message);
-  return retval;
+/**
+ * fep_client_set_key_event_filter:
+ * @client: a FepClient
+ * @filter: a filter function
+ * @data: user supplied data
+ *
+ * Set a key event filter which will be called when client receives
+ * key events.
+ */
+void
+fep_client_set_key_event_filter (FepClient *client,
+				 FepKeyEventFilter filter,
+				 void *data)
+{
+  client->key_event_filter = filter;
+  client->key_event_filter_data = data;
 }
 
 /**
@@ -245,65 +213,62 @@ int
 fep_client_dispatch_key_event (FepClient *client)
 {
   FepControlMessage message;
-  char *endptr;
-  unsigned int key;
+  unsigned int keyval;
   FepModifierType modifiers;
-  FepQueue *head;
-  int retval;
+  int retval, intval;
 
   retval = _fep_read_control_message (client->control, &message);
+  if (retval < 0 || message.command != FEP_CONTROL_KEY_EVENT)
+    {
+      _fep_control_message_free_args (&message);
+      fep_log (FEP_LOG_LEVEL_WARNING, "no key event");
+      return -1;
+    }
+
+  if (message.n_args != 2)
+    {
+      _fep_control_message_free_args (&message);
+      fep_log (FEP_LOG_LEVEL_WARNING, "too few arguments for KEY_EVENT");
+      retval = -1;
+      goto out;
+    }
+
+  retval = _fep_control_message_read_int_arg (&message, 0, &intval);
   if (retval < 0)
-    return retval;
-
-  if (message.command != FEP_CONTROL_KEY_EVENT)
     {
-      _fep_strfreev (message.args);
-      return -1;
+      _fep_control_message_free_args (&message);
+      goto out;
     }
+  keyval = intval;
 
-  errno = 0;
-  key = strtoul (message.args[0], &endptr, 10);
-  if (errno != 0 || *endptr != '\0')
+  retval = _fep_control_message_read_int_arg (&message, 1, &intval);
+  if (retval < 0)
     {
-      _fep_strfreev (message.args);
-      return -1;
+      _fep_control_message_free_args (&message);
+      goto out;
     }
+  modifiers = intval;
+  _fep_control_message_free_args (&message);
 
-  errno = 0;
-  modifiers = strtoul (message.args[1], &endptr, 10);
-  if (errno != 0 || *endptr != '\0')
-    {
-      _fep_strfreev (message.args);
-      return -1;
-    }
-
-  _fep_strfreev (message.args);
-  message.command = FEP_CONTROL_KEY_EVENT_RESPONSE;
-  message.args = calloc (2, sizeof(char *));
-  client->key_event_handling = 1;
-  if (client->key_event_handler
-      && client->key_event_handler (key, modifiers,
-				    client->key_event_handler_data))
-    message.args[0] = strdup ("1");
+ out:
+  message.command = FEP_CONTROL_RESPONSE;
+  _fep_control_message_alloc_args (&message, 2);
+  _fep_control_message_write_byte_arg (&message, 0, FEP_CONTROL_KEY_EVENT);
+  if (retval >= 0
+      && client->key_event_filter
+      && client->key_event_filter (keyval, modifiers,
+				   client->key_event_filter_data))
+    _fep_control_message_write_int_arg (&message, 1, 1);
   else
-    message.args[0] = strdup ("0");
-  client->key_event_handling = 0;
+    _fep_control_message_write_int_arg (&message, 1, 0);
 
   retval = _fep_write_control_message (client->control, &message);
-  _fep_strfreev (message.args);
+  _fep_control_message_free_args (&message);
 
-  for (head = client->messages; head; )
-    {
-      FepControlMessage *_message = head->data;
-      FepQueue *_head;
-      _fep_write_control_message (client->control, _message);
-      _fep_strfreev (_message->args);
-      free (_message);
-      _head = head;
-      head = head->next;
-      free (_head);
-    }
-  client->messages = NULL;
+  if (retval >= 0
+      && client->key_event_handler)
+    client->key_event_handler (keyval, modifiers,
+			       client->key_event_handler_data);
 
   return retval;
 }

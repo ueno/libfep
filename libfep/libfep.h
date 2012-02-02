@@ -21,5 +21,6 @@
 
 #include <libfep/keydefs.h>
 #include <libfep/client.h>
+#include <libfep/logger.h>
 
 #endif	/* __LIBFEP_H__ */

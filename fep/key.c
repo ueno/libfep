@@ -34,7 +34,6 @@
 
 */
 
-#include "libfep/libfep.h"
 #include "private.h"
 #include <string.h>
 #include <stdlib.h>
@@ -97,13 +96,17 @@ _fep_char_to_key (char      tty,
       /* C-space */
     case 0:
       key = ' ';
+      break;
     case '\t':
       key = FEP_Tab;
+      break;
     case '\r':
       key = FEP_Return;
+      break;
       /* C-[ */
     case '\033':
       key = FEP_Escape;
+      break;
       /* C-? */
     case 0x7f:
       key = FEP_Delete;

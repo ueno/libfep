@@ -24,6 +24,8 @@
 #endif
 
 #include <stdio.h>
+#include <stdint.h>
+#include <unistd.h>
 #include <libfep/libfep.h>
 
 #ifndef BUFSIZ
@@ -70,23 +72,37 @@ typedef enum
   {
     FEP_CONTROL_SET_CURSOR_TEXT = 1,
     FEP_CONTROL_SET_STATUS_TEXT = 2,
-    FEP_CONTROL_FORWARD_TEXT = 3,
+    FEP_CONTROL_SEND_DATA = 3,
     FEP_CONTROL_KEY_EVENT = 4,
-    FEP_CONTROL_KEY_EVENT_RESPONSE = 5
+    FEP_CONTROL_RESPONSE = 5
   } FepControlCommand;
 
 struct _FepControlMessage
 {
   FepControlCommand command;
-  char **args;
+  FepString *args;
+  size_t n_args;
 };
 typedef struct _FepControlMessage FepControlMessage;
 
-int
-_fep_read_control_message (int fd,
-			   FepControlMessage *message);
-int
-_fep_write_control_message (int fd,
-			    FepControlMessage *message);
+int  _fep_read_control_message           (int                fd,
+                                          FepControlMessage *message);
+int  _fep_write_control_message          (int                fd,
+                                          FepControlMessage *message);
+int  _fep_transceive_control_message      (int                fd,
+                                          FepControlMessage *request,
+                                          FepControlMessage *response);
+void _fep_control_message_alloc_args     (FepControlMessage *message,
+                                          size_t             n_args);
+void _fep_control_message_free_args      (FepControlMessage *message);
+int  _fep_control_message_read_int_arg   (FepControlMessage *message,
+                                          off_t              index,
+                                          int32_t           *r_val);
+int  _fep_control_message_write_int_arg  (FepControlMessage *message,
+                                          off_t              index,
+                                          int32_t            val);
+int  _fep_control_message_write_byte_arg (FepControlMessage *message,
+                                          off_t              index,
+                                          uint8_t            val);
 
 #endif	/* __LIBFEP_PRIVATE_H__ */

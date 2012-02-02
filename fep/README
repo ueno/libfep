@@ -1,19 +1,13 @@
-The following source files contain derived code from uim (uim/fep/*):
+The following 5 source files contain derived code from uim
+http://code.google.com/p/uim/ (uim/fep/*), which are released under
+BSD license.  See COPYING.BSD for detail:
 
-- fep.c
-- input.c
-- key.c
-- output.c
-- sgr.c
+* fep.c
+* input.c
+* key.c
+* output.c
+* sgr.c
 
-Other files listed below are written from scratch:
+The original copyright statement is:
 
-- cap.c
-- control.c
-- csi.c
-- fep.h
-- main.c
-- private.h
-
-All files are released under 3-Clause BSD license.
-See COPYING.BSD for detail.
+Copyright (c) 2003-2011 uim Project http://code.google.com/p/uim/

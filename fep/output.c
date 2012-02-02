@@ -170,14 +170,7 @@ _fep_output_status_text_string (Fep *fep, const char *str)
 static void
 _fep_output_goto_status_text (Fep *fep, int col)
 {
-  int row = fep->winsize.ws_row;
-  if (row != fep->cursor.row || col != fep->cursor.col)
-    {
-      char *str = tparm (cursor_address, row, col);
-      _fep_putp (fep, str);
-      fep->cursor.row = row;
-      fep->cursor.col = col;
-    }
+  _fep_output_cursor_address (fep, fep->winsize.ws_row, col);
 }
 
 void
@@ -261,21 +254,22 @@ _fep_output_cursor_text (Fep *fep, const char *text)
       if (_fep_output_get_cursor_position (fep, &fep->cursor))
 	_fep_output_cursor_address (fep, fep->cursor.row, fep->cursor.col);
 
-      fep->cursor_text = _fep_strtrunc (text,
-					fep->winsize.ws_col - fep->cursor.col);
       if (fep->ptybuf.len > 0)
 	_fep_string_clear (&fep->ptybuf);
 
       apply_attr (fep, &fep->attr_tty);
-      write (fep->tty_out, fep->cursor_text, strlen (fep->cursor_text));
+      fep->cursor_text = _fep_strtrunc (text,
+					fep->winsize.ws_col - fep->cursor.col);
+      if (fep->cursor_text)
+	write (fep->tty_out, fep->cursor_text, strlen (fep->cursor_text));
       _fep_output_restore_cursor (fep);
     }
 }
 
-void
-_fep_output_forward_text (Fep *fep, const char *text)
+ssize_t
+_fep_output_send_data (Fep *fep, const char *data, size_t length)
 {
-  write (fep->pty, text, strlen (text));
+  return write (fep->pty, data, length);
 }
 
 void
@@ -316,7 +310,6 @@ _fep_output_dsr_cpr (Fep *fep, FepPoint *point)
 	{
 	  const char *csi_end;
 	  char **strv, *endptr;
-	  int row, col;
 
 	  csi[csi_len - 1] = '\0';
 	  strv = _fep_strsplit (csi + 2, ";", 2);
@@ -367,7 +360,9 @@ _fep_output_init_screen (Fep *fep)
 
   _fep_putp (fep, cursor_invisible);
   fep->cursor.row = fep->cursor.col = -1;
-  fep->has_cpr = _fep_output_dsr_cpr (fep, &fep->cursor);
+  /* FIXME: DSR-CPR is currently unused for some reason */
+  /* fep->has_cpr = _fep_output_dsr_cpr (fep, &fep->cursor); */
+  fep->has_cpr = 0;
   if (fep->has_cpr)
     {
       FepPoint cursor0, cursor1;

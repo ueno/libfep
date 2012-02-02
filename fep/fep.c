@@ -34,7 +34,6 @@
 
 */
 
-#include "libfep/libfep.h"
 #include "private.h"
 #include <sys/ioctl.h>
 #include <sys/types.h>
@@ -344,7 +343,7 @@ main_loop (Fep *fep)
 	      size_t key_len;
 	      uint32_t state = 0;
 	      FepReadKeyResult result;
-	      FepControlMessage server_message;
+	      FepControlMessage request;
 	      int j;
 	      bool handled;
 
@@ -359,7 +358,11 @@ main_loop (Fep *fep)
 		  state |= _state;
 
 		  if (buf[i] == '\033' && i == bytes_read - 1)
-		    result = FEP_READ_KEY_NOT_ENOUGH;
+		    {
+		      fep_log (FEP_LOG_LEVEL_WARNING,
+			       "premature key sequence");
+		      result = FEP_READ_KEY_NOT_ENOUGH;
+		    }
 
 		  if (buf[i] == '\033' && i < bytes_read - 1)
 		    {
@@ -370,40 +373,28 @@ main_loop (Fep *fep)
 		}
 
 	      handled = false;
-	      server_message.command = FEP_CONTROL_KEY_EVENT;
-	      server_message.args = calloc (3, sizeof(char *));
-	      server_message.args[0] = calloc (16, sizeof(char *));
-	      snprintf (server_message.args[0], 15, "%u", key);
-	      server_message.args[1] = calloc (16, sizeof(char *));
-	      snprintf (server_message.args[1], 15, "%u", state);
+	      request.command = FEP_CONTROL_KEY_EVENT;
+	      _fep_control_message_alloc_args (&request, 2);
+	      _fep_control_message_write_int_arg (&request, 0, (int32_t) key);
+	      _fep_control_message_write_int_arg (&request, 1, (int32_t) state);
 	      for (j = 0; j < fep->n_clients; j++)
 		{
+		  FepControlMessage response;
 		  if (fep->clients[j] < 0)
 		    continue;
-		  if (_fep_write_control_message (fep->clients[j],
-						  &server_message) < 0)
-		    fprintf (stderr, "Can't write to client %d\n", j);
-		  else
+		  if (_fep_transceive_control_message (fep->clients[j],
+						       &request,
+						       &response) == 0)
 		    {
-		      FepControlMessage client_message;
-		      if (_fep_read_control_message (fep->clients[j],
-						     &client_message) < 0)
-			fprintf (stderr, "Can't read from client %d: %s\n",
-				 j, strerror (errno));
-		      else if (client_message.command !=
-			       FEP_CONTROL_KEY_EVENT_RESPONSE)
-			fprintf (stderr,
-				 "Invalid response from client %d: %d\n",
-				 j, client_message.command);
-		      else
-			{
-			  if (strcmp (client_message.args[0], "1") == 0)
-			    handled = true;
-			}
-		      _fep_strfreev (client_message.args);
+		      int32_t intval;
+		      _fep_control_message_read_int_arg (&response, 1, &intval);
+		      if (intval > 0)
+			handled = true;
+		      _fep_control_message_free_args (&response);
 		    }
+		  FD_CLR (fep->clients[j], &fds);
 		}
-	      _fep_strfreev (server_message.args);
+	      _fep_control_message_free_args (&request);
 	      if (!handled)
 		{
 		  if (state & FEP_MOD1_MASK)

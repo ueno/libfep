@@ -1,34 +1,20 @@
 /*
-
-  Copyright (c) 2012 Daiki Ueno <ueno@unixuser.org>
-  Copyright (c) 2012 Red Hat, Inc.
-
-  Redistribution and use in source and binary forms, with or without
-  modification, are permitted provided that the following conditions
-  are met:
-
-  1. Redistributions of source code must retain the above copyright
-     notice, this list of conditions and the following disclaimer.
-  2. Redistributions in binary form must reproduce the above copyright
-     notice, this list of conditions and the following disclaimer in the
-     documentation and/or other materials provided with the distribution.
-  3. Neither the name of authors nor the names of its contributors
-     may be used to endorse or promote products derived from this software
-     without specific prior written permission.
-
-  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS ``AS IS'' AND
-  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-  ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE
-  FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
-  OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-  HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-  OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-  SUCH DAMAGE.
-
-*/
+ * Copyright (C) 2012 Daiki Ueno <ueno@unixuser.org>
+ * Copyright (C) 2012 Red Hat, Inc.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include "fep.h"
 #include <libfep/private.h>	/* _fep_strsplit_set */
@@ -44,6 +30,7 @@ usage (FILE *out, const char *program_name)
 	   "Usage: %s OPTIONS...\n"
 	   "where OPTIONS are:\n"
 	   "  -e, --executable=COMMAND\tCommand to run (default: $SHELL)\n"
+	   "  -l, --log-file=FILE\tLog file\n"
 	   "  -h, --help\tShow this help\n",
 	   program_name);
 }
@@ -53,7 +40,7 @@ main (int argc, char **argv)
 {
   Fep *fep;
   int c;
-  char **command = NULL;
+  char **command = NULL, *log_file = NULL;
 
   setlocale (LC_ALL, "");
 
@@ -63,10 +50,11 @@ main (int argc, char **argv)
       static struct option long_options[] =
 	{
 	  { "execute", required_argument, 0, 'e' },
+	  { "log-file", required_argument, 0, 'l' },
 	  { "help", no_argument, 0, 'h' },
 	  { NULL, 0, 0, 0 }
 	};
-      c = getopt_long (argc, argv, "e:h",
+      c = getopt_long (argc, argv, "e:l:h",
 		       long_options, &option_index);
       if (c == -1)
 	break;
@@ -75,6 +63,9 @@ main (int argc, char **argv)
 	{
 	case 'e':
 	  command = _fep_strsplit_set (optarg, " \f\t\n\r\v", -1);
+	  break;
+	case 'l':
+	  log_file = optarg;
 	  break;
 	case 'h':
 	  usage (stdout, argv[0]);
@@ -91,6 +82,12 @@ main (int argc, char **argv)
     {
       usage (stderr, argv[0]);
       exit (1);
+    }
+
+  if (log_file != NULL)
+    {
+      fep_set_log_file (log_file);
+      fep_set_log_level (FEP_LOG_LEVEL_DEBUG);
     }
 
   fep = fep_new ();

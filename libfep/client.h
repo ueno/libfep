@@ -20,17 +20,23 @@
 #define __LIBFEP_CLIENT_H__
 
 typedef struct _FepClient FepClient;
+typedef int (*FepKeyEventFilter) (unsigned int key, FepModifierType modifiers,
+				  void *data);
 typedef int (*FepKeyEventHandler) (unsigned int key, FepModifierType modifiers,
 				   void *data);
 
 FepClient *fep_client_open                  (const char        *address);
 int        fep_client_get_key_event_poll_fd (FepClient         *client);
-int        fep_client_set_cursor_text       (FepClient         *client,
+void       fep_client_set_cursor_text       (FepClient         *client,
                                              const char        *text);
-int        fep_client_set_status_text       (FepClient         *client,
+void       fep_client_set_status_text       (FepClient         *client,
                                              const char        *text);
-int        fep_client_forward_text          (FepClient         *client,
-                                             const char        *text);
+void       fep_client_send_data             (FepClient         *client,
+                                             const char        *data,
+                                             size_t             data_len);
+void       fep_client_set_key_event_filter  (FepClient         *client,
+                                             FepKeyEventFilter  filter,
+                                             void              *data);
 void       fep_client_set_key_event_handler (FepClient         *client,
                                              FepKeyEventHandler handler,
                                              void              *data);
