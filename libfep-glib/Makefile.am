@@ -38,7 +38,7 @@ fepgmarshalers.c: $(srcdir)/fepgmarshalers.list fepgmarshalers.h
 DISTCLEANFILES = fepgmarshalers.h fepgmarshalers.c
 MAINTAINERCLEANFILES =
 CLEANFILES =
-EXTRA_DIST =
+EXTRA_DIST = fepgmarshalers.list
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libfep-glib.pc
