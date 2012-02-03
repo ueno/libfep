@@ -97,11 +97,11 @@ GOBJECT_INTROSPECTION_CHECK([0.9.0])
 if test "x$found_introspection" = "xyes"; then
   AC_PATH_PROG([VAPIGEN], [vapigen], [false])
   if test "x$VAPIGEN" != "xfalse"; then
-    enable_vala=yes
+    enable_vapigen=yes
   fi
   AC_SUBST(VAPIGEN)
 fi
-AM_CONDITIONAL(ENABLE_VALA, [test "x$enable_vala" = "xyes"])
+AM_CONDITIONAL(ENABLE_VAPIGEN, [test "x$enable_vapigen" = "xyes"])
 
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile

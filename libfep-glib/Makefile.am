@@ -66,14 +66,15 @@ typelib_DATA = $(INTROSPECTION_GIRS:.gir=.typelib)
 CLEANFILES += $(gir_DATA) $(typelib_DATA)
 endif
 
-if ENABLE_VALA
 vapidir = $(datadir)/vala/vapi
 dist_vapi_DATA = libfep-glib.vapi libfep-glib.deps
 
+if ENABLE_VAPIGEN
 libfep-glib.vapi: Fep@FEP_LIBRARY_SUFFIX@.metadata | Fep@FEP_LIBRARY_SUFFIX@.gir
 	$(VAPIGEN) --pkg=gio-2.0 --library libfep-glib Fep-1.0.gir
+endif
+
 MAINTAINERCLEANFILES += libfep-glib.vapi
 EXTRA_DIST += Fep@FEP_LIBRARY_SUFFIX@.metadata
-endif
 
 -include $(top_srcdir)/git.mk
