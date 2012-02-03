@@ -1,0 +1,29 @@
+.\"                                      Hey, EMACS: -*- nroff -*-
+.TH LIBFEP 1 "3 Feb 2012"
+.SH NAME
+fep \- FEP server running sub-shell
+.SH SYNOPSIS
+.B fep
+.RI [ options ]
+.br
+.SH DESCRIPTION
+\fBfep\fP is a shell wrapper with FEP support.  It can be controlled
+by clients (such as fepcli) running inside the sub-shell, through the
+libfep library.
+.SH OPTIONS
+The \fBfep\fP command follows the usual GNU command line syntax, with
+long options starting with two dashes (`-').  A summary of options is
+included below.
+.TP
+.B \-h, \-\-help
+Show summary of options.
+.TP
+.B \-e, \-\-executable=\fICOMMAND\fR
+Specify a shell program executed by fep.
+.TP
+.B \-l, \-\-log\-file=\fIFILE\fR
+Specify a log file.
+.SH SEE ALSO
+\fBfepcli\fR(1)
+.SH AUTHOR
+libfep was written by Daiki Ueno <ueno@unixuser.org>.

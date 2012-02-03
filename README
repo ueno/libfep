@@ -22,6 +22,11 @@ $ ./tests/fepcli -k # wait for a key event
 keyval = XX, modifiers = XX
 $
 
+Documentation:
+
+* http://du-a.org/docs/libfep/html/ for native binding reference
+* http://du-a.org/docs/libfep-glib/html/ for GLib binding reference
+
 License:
 
 Some files to build "fep" program are BSD, while the rest of files are
