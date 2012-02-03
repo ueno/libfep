@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-SUBDIRS = lib libfep fep tests
+SUBDIRS = lib libfep fep tools
 
 if ENABLE_GLIB
 SUBDIRS += libfep-glib

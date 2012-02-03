@@ -36,6 +36,7 @@ fepgmarshalers.c: $(srcdir)/fepgmarshalers.list fepgmarshalers.h
 	mv $@.tmp $@
 
 DISTCLEANFILES = fepgmarshalers.h fepgmarshalers.c
+MAINTAINERCLEANFILES =
 CLEANFILES =
 EXTRA_DIST =
 
@@ -67,12 +68,12 @@ endif
 
 if ENABLE_VALA
 vapidir = $(datadir)/vala/vapi
-vapi_DATA = libfep-glib.vapi
+dist_vapi_DATA = libfep-glib.vapi libfep-glib.deps
 
-libfep-glib.vapi: Fep@FEP_LIBRARY_SUFFIX@.gir
+libfep-glib.vapi: Fep@FEP_LIBRARY_SUFFIX@.metadata | Fep@FEP_LIBRARY_SUFFIX@.gir
 	$(VAPIGEN) --pkg=gio-2.0 --library libfep-glib Fep-1.0.gir
-DISTCLEANFILES += libfep-glib.vapi
-EXTRA_DIST += Fep@FEP_LIBRARY_SUFFIX@.metadata libfep-glib.deps
+MAINTAINERCLEANFILES += libfep-glib.vapi
+EXTRA_DIST += Fep@FEP_LIBRARY_SUFFIX@.metadata
 endif
 
 -include $(top_srcdir)/git.mk

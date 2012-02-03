@@ -111,7 +111,7 @@ libfep/Makefile
 libfep/libfep.pc
 libfep-glib/Makefile
 libfep-glib/libfep-glib.pc
-tests/Makefile
+tools/Makefile
 docs/Makefile
 docs/libfep/Makefile
 docs/libfep/version.xml
