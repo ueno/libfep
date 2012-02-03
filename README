@@ -24,8 +24,8 @@ $
 
 License:
 
-Some files to build "fep" program is BSD, while the rest is GPLv3+.
-See fep/README for more detail.
+Some files to build "fep" program are BSD, while the rest of files are
+GPLv3+.  See fep/README for more detail.
 
 Copyright (C) 2012 Daiki Ueno <ueno@unixuser.org>
 Copyright (C) 2012 Red Hat, Inc.
