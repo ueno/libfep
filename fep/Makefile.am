@@ -40,7 +40,7 @@ fep_LDADD =					\
 	$(top_builddir)/libfep/libfep.la	\
 	$(NULL)
 
-dist_man_MANS = fep.1 fepcli.1
+dist_man_MANS = fep.1
 
 EXTRA_DIST = README COPYING.BSD
 

@@ -20,4 +20,6 @@ fepcli_CFLAGS = -I$(top_srcdir)
 fepcli_LDADD = $(top_builddir)/libfep/libfep.la
 fepcli_SOURCES = cli.c
 
+dist_man_MANS = fepcli.1
+
 -include $(top_srcdir)/git.mk
