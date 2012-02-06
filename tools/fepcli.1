@@ -1,0 +1,51 @@
+.\"                                      Hey, EMACS: -*- nroff -*-
+.TH LIBFEP 1 "3 Feb 2012"
+.SH NAME
+fepcli \- test client to fep
+.SH SYNOPSIS
+.B fep
+.RI [ options ]
+.br
+.SH DESCRIPTION
+\fBfepcli\fP is a client to fep(1).
+.SH OPTIONS
+The \fBfep\fP command follows the usual GNU command line syntax, with
+long options starting with two dashes (`-').  A summary of options is
+included below.
+.TP
+.B \-h, \-\-help
+Show summary of options.
+.TP
+.B \-c, \-\-cursor\-text=\fITEXT\fR
+Render text at cursor position.
+.TP
+.B \-s, \-\-status\-text=\fITEXT\fR
+Render text at the bottom of screen.
+.TP
+.B \-d, \-\-send\-data=\fIDATA\fR
+Send data to the FEP sub-shell.
+.TP
+.B \-k, \-\-listen\-key\-event
+Listen to a key event.
+.TP
+.B \-l, \-\-log\-file=\fIFILE\fR
+Specify a log file.
+.SH EXAMPLE
+.TP
+$ fep \-e /bin/sh
+.TP
+$ fepcli -s foo
+shows text at the bottom
+.TP
+$ { sleep 1; fepcli \-c foo; } &
+shows text at the cursor
+.TP
+$ { sleep 1; fepcli \-d bar; } &
+sends text to the child process
+.TP
+$ fepcli \-k
+waits for a key event
+.SH SEE ALSO
+\fBfep\fR(1)
+.SH AUTHOR
+libfep was written by Daiki Ueno <ueno@unixuser.org>.
