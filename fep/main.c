@@ -17,7 +17,7 @@
  */
 
 #include "fep.h"
-#include <libfep/private.h>	/* _fep_strsplit_set */
+#include <libfep/private.h>    /* _fep_strsplit_set */
 #include <stdlib.h>
 #include <stdio.h>
 #include <getopt.h>
@@ -27,9 +27,8 @@ static void
 usage (FILE *out, const char *program_name)
 {
   fprintf (out,
-	   "Usage: %s OPTIONS...\n"
+	   "Usage: %s OPTIONS COMMAND...\n"
 	   "where OPTIONS are:\n"
-	   "  -e, --executable=COMMAND\tCommand to run (default: $SHELL)\n"
 	   "  -l, --log-file=FILE\tLog file\n"
 	   "  -h, --help\tShow this help\n",
 	   program_name);
@@ -49,7 +48,6 @@ main (int argc, char **argv)
       int option_index = 0;
       static struct option long_options[] =
 	{
-	  { "execute", required_argument, 0, 'e' },
 	  { "log-file", required_argument, 0, 'l' },
 	  { "help", no_argument, 0, 'h' },
 	  { NULL, 0, 0, 0 }
@@ -61,9 +59,6 @@ main (int argc, char **argv)
 
       switch (c)
 	{
-	case 'e':
-	  command = _fep_strsplit_set (optarg, " \f\t\n\r\v", -1);
-	  break;
 	case 'l':
 	  log_file = optarg;
 	  break;
@@ -79,9 +74,13 @@ main (int argc, char **argv)
     }
 
   if (optind < argc)
+    command = &argv[optind];
+  else
     {
-      usage (stderr, argv[0]);
-      exit (1);
+      static char *shell[2];
+      shell[0] = getenv ("SHELL");
+      shell[1] = NULL;
+      command = shell;
     }
 
   if (log_file != NULL)
@@ -91,13 +90,6 @@ main (int argc, char **argv)
     }
 
   fep = fep_new ();
-  if (command == NULL)
-    {
-      static char *shell[2];
-      shell[0] = getenv ("SHELL");
-      shell[1] = NULL;
-      command = shell;
-    }
   if (fep_run (fep, (const char **) command) < 0)
     {
       fprintf (stderr, "Can't run FEP command\n");
