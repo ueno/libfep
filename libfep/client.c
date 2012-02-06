@@ -21,6 +21,7 @@
 #include <sys/un.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <unistd.h>
 #include <errno.h>
 
@@ -32,10 +33,10 @@
 struct _FepClient
 {
   int control;
+  bool filter_running;
+  FepList *messages;
   FepKeyEventFilter key_event_filter;
   void *key_event_filter_data;
-  FepKeyEventHandler key_event_handler;
-  void *key_event_handler_data;
 };
 
 /**
@@ -61,6 +62,8 @@ fep_client_open (const char *address)
     return NULL;
 
   client = malloc (sizeof(FepClient));
+  client->filter_running = false;
+  client->messages = NULL;
 
   memset (&sun, 0, sizeof(struct sockaddr_un));
   sun.sun_family = AF_UNIX;
@@ -100,10 +103,12 @@ fep_client_set_cursor_text (FepClient *client, const char *text)
 
   message.command = FEP_CONTROL_SET_CURSOR_TEXT;
   _fep_control_message_alloc_args (&message, 1);
-  message.args[0].str = strdup (text);
-  message.args[0].len = strlen (text) + 1; /* NULL terminate */
+  _fep_control_message_write_string_arg (&message, 0, text, strlen (text) + 1);
 
-  _fep_write_control_message (client->control, &message);
+  if (client->filter_running)
+    client->messages = _fep_append_control_message (client->messages, &message);
+  else
+    _fep_write_control_message (client->control, &message);
   _fep_control_message_free_args (&message);
 }
 
@@ -121,10 +126,12 @@ fep_client_set_status_text (FepClient *client, const char *text)
 
   message.command = FEP_CONTROL_SET_STATUS_TEXT;
   _fep_control_message_alloc_args (&message, 1);
-  message.args[0].str = strdup (text);
-  message.args[0].len = strlen (text) + 1; /* NULL terminate */
+  _fep_control_message_write_string_arg (&message, 0, text, strlen (text) + 1);
 
-  _fep_write_control_message (client->control, &message);
+  if (client->filter_running)
+    client->messages = _fep_append_control_message (client->messages, &message);
+  else
+    _fep_write_control_message (client->control, &message);
   _fep_control_message_free_args (&message);
 }
 
@@ -143,11 +150,12 @@ fep_client_send_data (FepClient *client, const char *data, size_t length)
 
   message.command = FEP_CONTROL_SEND_DATA;
   _fep_control_message_alloc_args (&message, 1);
-  message.args[0].str = malloc (length * sizeof(char));
-  memcpy (message.args[0].str, data, length);
-  message.args[0].len = length;
+  _fep_control_message_write_string_arg (&message, 0, data, length);
 
-  _fep_write_control_message (client->control, &message);
+  if (client->filter_running)
+    client->messages = _fep_append_control_message (client->messages, &message);
+  else
+    _fep_write_control_message (client->control, &message);
   _fep_control_message_free_args (&message);
 }
 
@@ -167,24 +175,6 @@ fep_client_set_key_event_filter (FepClient *client,
 {
   client->key_event_filter = filter;
   client->key_event_filter_data = data;
-}
-
-/**
- * fep_client_set_key_event_handler:
- * @client: a FepClient
- * @handler: a handler function
- * @data: user supplied data
- *
- * Set a key event handler which will be called when client receives
- * key events.
- */
-void
-fep_client_set_key_event_handler (FepClient *client,
-				  FepKeyEventHandler handler,
-				  void *data)
-{
-  client->key_event_handler = handler;
-  client->key_event_handler_data = data;
 }
 
 /**
@@ -218,10 +208,13 @@ fep_client_dispatch_key_event (FepClient *client)
   int retval, intval;
 
   retval = _fep_read_control_message (client->control, &message);
-  if (retval < 0 || message.command != FEP_CONTROL_KEY_EVENT)
+  if (retval < 0)
+    return -1;
+
+  if (message.command != FEP_CONTROL_KEY_EVENT)
     {
       _fep_control_message_free_args (&message);
-      fep_log (FEP_LOG_LEVEL_WARNING, "no key event");
+      fep_log (FEP_LOG_LEVEL_WARNING, "not a KEY_EVENT");
       return -1;
     }
 
@@ -254,6 +247,8 @@ fep_client_dispatch_key_event (FepClient *client)
   message.command = FEP_CONTROL_RESPONSE;
   _fep_control_message_alloc_args (&message, 2);
   _fep_control_message_write_byte_arg (&message, 0, FEP_CONTROL_KEY_EVENT);
+
+  client->filter_running = true;
   if (retval >= 0
       && client->key_event_filter
       && client->key_event_filter (keyval, modifiers,
@@ -261,14 +256,23 @@ fep_client_dispatch_key_event (FepClient *client)
     _fep_control_message_write_int_arg (&message, 1, 1);
   else
     _fep_control_message_write_int_arg (&message, 1, 0);
+  client->filter_running = false;
 
   retval = _fep_write_control_message (client->control, &message);
   _fep_control_message_free_args (&message);
 
-  if (retval >= 0
-      && client->key_event_handler)
-    client->key_event_handler (keyval, modifiers,
-			       client->key_event_handler_data);
+  if (retval >= 0)
+    while (client->messages)
+      {
+	FepList *_head = client->messages;
+	FepControlMessage *_message = _head->data;
+
+	client->messages = _head->next;
+
+	_fep_write_control_message (client->control, _message);
+	_fep_control_message_free (_message);
+	free (_head);
+      }
 
   return retval;
 }

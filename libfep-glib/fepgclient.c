@@ -38,7 +38,6 @@ enum
 enum
   {
     FILTER_KEY_EVENT_SIGNAL,
-    PROCESS_KEY_EVENT_SIGNAL,
     LAST_SIGNAL
   };
 
@@ -72,16 +71,6 @@ key_event_filter (unsigned int    keyval,
   return retval ? 1 : 0;
 }
 
-static void
-key_event_handler (unsigned int    keyval,
-                   FepModifierType modifiers,
-                   void           *data)
-{
-  FepGClient *client = FEP_G_CLIENT (data);
-  g_signal_emit (client, signals[PROCESS_KEY_EVENT_SIGNAL], 0,
-		 keyval, modifiers);
-}
-
 static gboolean
 initable_init (GInitable    *initable,
                GCancellable *cancellable,
@@ -96,9 +85,6 @@ initable_init (GInitable    *initable,
       fep_client_set_key_event_filter (priv->client,
 				       (FepKeyEventFilter) key_event_filter,
 				       client);
-      fep_client_set_key_event_handler (priv->client,
-					(FepKeyEventHandler) key_event_handler,
-					client);
 #ifdef DEBUG
       fep_set_log_file ("fepgclient.log");
       fep_set_log_level (FEP_LOG_LEVEL_DEBUG);
@@ -121,14 +107,6 @@ fep_g_client_real_filter_key_event (FepGClient *client,
 {
   /* g_debug ("%u %u", keyval, modifiers); */
   return FALSE;
-}
-
-static void
-fep_g_client_real_process_key_event (FepGClient *client,
-				     guint       keyval,
-				     guint       modifiers)
-{
-  /* g_debug ("%u %u", keyval, modifiers); */
 }
 
 static void
@@ -197,7 +175,6 @@ fep_g_client_class_init (FepGClientClass *klass)
 			    sizeof (FepGClientPrivate));
 
   klass->filter_key_event = fep_g_client_real_filter_key_event;
-  klass->process_key_event = fep_g_client_real_process_key_event;
 
   gobject_class->set_property = fep_g_client_set_property;
   gobject_class->get_property = fep_g_client_get_property;
@@ -220,27 +197,6 @@ fep_g_client_class_init (FepGClientClass *klass)
 		  NULL,
 		  _fep_g_marshal_BOOLEAN__UINT_UINT,
 		  G_TYPE_BOOLEAN,
-		  2,
-		  G_TYPE_UINT,
-		  G_TYPE_UINT);
-
-  /**
-   * FepGClient::process-key-event:
-   * @client: a #FepGClient
-   * @keyval: a keyval
-   * @modifiers: modifier mask
-   *
-   * The ::process-key-event signal is emitted when key event is dispatched.
-   */
-  signals[PROCESS_KEY_EVENT_SIGNAL] =
-    g_signal_new (I_("process-key-event"),
-		  G_TYPE_FROM_CLASS(gobject_class),
-		  G_SIGNAL_RUN_LAST,
-		  G_STRUCT_OFFSET(FepGClientClass, process_key_event),
-		  NULL,
-		  NULL,
-		  _fep_g_marshal_VOID__UINT_UINT,
-		  G_TYPE_NONE,
 		  2,
 		  G_TYPE_UINT,
 		  G_TYPE_UINT);

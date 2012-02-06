@@ -22,8 +22,6 @@
 typedef struct _FepClient FepClient;
 typedef int (*FepKeyEventFilter) (unsigned int key, FepModifierType modifiers,
 				  void *data);
-typedef int (*FepKeyEventHandler) (unsigned int key, FepModifierType modifiers,
-				   void *data);
 
 FepClient *fep_client_open                  (const char        *address);
 int        fep_client_get_key_event_poll_fd (FepClient         *client);
@@ -36,9 +34,6 @@ void       fep_client_send_data             (FepClient         *client,
                                              size_t             data_len);
 void       fep_client_set_key_event_filter  (FepClient         *client,
                                              FepKeyEventFilter  filter,
-                                             void              *data);
-void       fep_client_set_key_event_handler (FepClient         *client,
-                                             FepKeyEventHandler handler,
                                              void              *data);
 int        fep_client_dispatch_key_event    (FepClient         *client);
 void       fep_client_close                 (FepClient         *client);

@@ -248,7 +248,7 @@ _fep_write_control_message (int fd,
 
   if (fep_get_log_level () >= FEP_LOG_LEVEL_DEBUG)
     {
-      char str = _fep_control_message_to_string (message);
+      char *str = _fep_control_message_to_string (message);
       fep_log (FEP_LOG_LEVEL_DEBUG, "write %s", str);
       free (str);
     }
@@ -358,7 +358,7 @@ _fep_control_message_write_int_arg (FepControlMessage *message,
     return -1;
 
   message->args[index].str = calloc (4, sizeof(char));
-  message->args[index].len = 4;
+  message->args[index].cap = message->args[index].len = 4;
 #ifdef WORDS_BIGENDIAN
   intval = bswap_32 (val);
 #else
@@ -378,8 +378,59 @@ _fep_control_message_write_byte_arg (FepControlMessage *message,
     return -1;
 
   message->args[index].str = calloc (1, sizeof(char));
-  message->args[index].len = 1;
+  message->args[index].cap = message->args[index].len = 1;
   *message->args[index].str = val;
 
   return 0;
+}
+
+int
+_fep_control_message_write_string_arg (FepControlMessage *message,
+				       off_t index,
+				       const char *str,
+				       size_t length)
+{
+  if (index > message->n_args)
+    return -1;
+
+  message->args[index].str = calloc (length, sizeof(char));
+  message->args[index].cap = message->args[index].len = length;
+  memcpy (message->args[index].str, str, length);
+
+  return 0;
+}
+
+static void
+_fep_control_message_copy (FepControlMessage *dst, FepControlMessage *src)
+{
+  int i;
+
+  dst->command = src->command;
+  _fep_control_message_alloc_args (dst, src->n_args);
+  for (i = 0; i < src->n_args; i++)
+    _fep_string_copy (&dst->args[i], &src->args[i]);
+}
+
+void
+_fep_control_message_free (FepControlMessage *message)
+{
+  _fep_control_message_free_args (message);
+  free (message);
+}
+
+FepList *
+_fep_append_control_message (FepList *head,
+			     FepControlMessage *message)
+{
+  FepControlMessage *_message = calloc (1, sizeof(FepControlMessage));
+  _fep_control_message_copy (_message, message);
+
+  if (fep_get_log_level () >= FEP_LOG_LEVEL_DEBUG)
+    {
+      char *str = _fep_control_message_to_string (_message);
+      fep_log (FEP_LOG_LEVEL_DEBUG, "queue %s", str);
+      free (str);
+    }
+
+  return _fep_list_append (head, _message);
 }

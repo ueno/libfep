@@ -39,6 +39,15 @@ _fep_string_clear (FepString *buf)
   buf->len = 0;
 }
 
+void
+_fep_string_copy (FepString *dst, FepString *src)
+{
+  dst->cap = src->cap;
+  dst->len = src->len;
+  dst->str = malloc (src->cap);
+  memcpy (dst->str, src->str, src->len);
+}
+
 static char *
 search_strstr (const char *str, const char *delimiter, char **next)
 {

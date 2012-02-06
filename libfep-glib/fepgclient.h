@@ -48,7 +48,6 @@ struct _FepGClientClass {
   /*< public >*/
   /* signals */
   gboolean (*filter_key_event) (FepGClient *client, guint keyval, guint modifiers);
-  void (*process_key_event) (FepGClient *client, guint keyval, guint modifiers);
 
   /*< private >*/
   gpointer padding[32];
