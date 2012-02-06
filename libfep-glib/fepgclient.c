@@ -159,7 +159,8 @@ fep_g_client_finalize (GObject *object)
   FepGClient *client = FEP_G_CLIENT (object);
   FepGClientPrivate *priv = FEP_G_CLIENT_GET_PRIVATE (client);
 
-  fep_client_close (priv->client);
+  if (priv->client)
+    fep_client_close (priv->client);
   g_free (priv->address);
 
   G_OBJECT_CLASS (fep_g_client_parent_class)->finalize (object);
