@@ -116,7 +116,7 @@ _fep_char_to_key (char      tty,
       break;
       /* C-? */
     case 0x7f:
-      key = FEP_Delete;
+      key = FEP_BackSpace;
       break;
     default:
       /* C-a .. C-z */

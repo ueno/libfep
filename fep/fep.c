@@ -357,7 +357,7 @@ main_loop (Fep *fep)
 	  for (i = 0; i < bytes_read; i++)
 	    {
 	      uint32_t key;
-	      uint32_t state = 0, _state;
+	      uint32_t state;
 	      char *endptr;
 	      FepReadKeyResult result;
 	      FepControlMessage request;
@@ -367,13 +367,11 @@ main_loop (Fep *fep)
 	      result = _fep_read_key_from_string (buf + i,
 						  bytes_read - i,
 						  &key,
-						  &_state,
+						  &state,
 						  &endptr);
-	      state |= _state;
 	      if (result != FEP_READ_KEY_OK)
 		{
-		  _fep_char_to_key (buf[i], &key, &_state);
-		  state |= _state;
+		  _fep_char_to_key (buf[i], &key, &state);
 
 		  if (buf[i] == '\033' && i == bytes_read - 1)
 		    {
