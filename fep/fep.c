@@ -158,12 +158,29 @@ static void
 handle_winch_signal (Fep *fep)
 {
   struct winsize _winsize;
+  FepControlMessage request;
+  int i;
 
   memcpy (&_winsize, &fep->winsize, sizeof(struct winsize));
   ioctl (fep->tty_in, TIOCGWINSZ, &fep->winsize);
   fep->winsize.ws_row--;
   _fep_output_set_screen_size (fep, _winsize.ws_col, _winsize.ws_row);
   ioctl (fep->pty, TIOCSWINSZ, &fep->winsize);
+
+  request.command = FEP_CONTROL_RESIZE_EVENT;
+  _fep_control_message_alloc_args (&request, 2);
+  _fep_control_message_write_int_arg (&request, 1, (int32_t) _winsize.ws_col);
+  _fep_control_message_write_int_arg (&request, 2, (int32_t) _winsize.ws_row);
+  for (i = 0; i < fep->n_clients; i++)
+    {
+      FepControlMessage response;
+
+      if (_fep_transceive_control_message (fep->clients[i],
+					   &request,
+					   &response) == 0)
+	_fep_control_message_free_args (&response);
+    }
+  _fep_control_message_free_args (&request);
 }
 
 static void

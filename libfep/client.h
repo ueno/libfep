@@ -22,7 +22,8 @@
 enum _FepEventType
   {
     FEP_NOTHING = -1,
-    FEP_KEY_PRESS = 0
+    FEP_KEY_PRESS = 0,
+    FEP_RESIZED = 1
   };
 
 typedef enum _FepEventType FepEventType;
@@ -40,6 +41,14 @@ struct _FepEventKey
   FepModifierType modifiers;
 };
 typedef struct _FepEventKey FepEventKey;
+
+struct _FepEventResize
+{
+  FepEvent event;
+  unsigned int cols;
+  unsigned int rows;
+};
+typedef struct _FepEventResize FepEventResize;
 
 typedef struct _FepClient FepClient;
 typedef int (*FepEventFilter) (FepEvent *event, void *data);

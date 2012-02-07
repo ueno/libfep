@@ -38,6 +38,7 @@ enum
 enum
   {
     FILTER_KEY_EVENT_SIGNAL,
+    RESIZED_SIGNAL,
     LAST_SIGNAL
   };
 
@@ -64,15 +65,23 @@ event_filter (FepEvent *event,
               void     *data)
 {
   FepGClient *client = FEP_G_CLIENT (data);
-  FepEventKey *_event;
   gboolean retval = FALSE;
 
   switch (event->type)
     {
     case FEP_KEY_PRESS:
-      _event = (FepEventKey *)event;
-      g_signal_emit (client, signals[FILTER_KEY_EVENT_SIGNAL], 0,
-		     _event->keyval, _event->modifiers, &retval);
+      {
+	FepEventKey *_event = (FepEventKey *)event;
+	g_signal_emit (client, signals[FILTER_KEY_EVENT_SIGNAL], 0,
+		       _event->keyval, _event->modifiers, &retval);
+      }
+      break;
+    case FEP_RESIZED:
+      {
+	FepEventResize *_event = (FepEventResize *)event;
+	g_signal_emit (client, signals[RESIZED_SIGNAL], 0,
+		       _event->cols, _event->rows);
+      }
       break;
     default:
       break;
@@ -116,6 +125,14 @@ fep_g_client_real_filter_key_event (FepGClient *client,
 {
   /* g_debug ("%u %u", keyval, modifiers); */
   return FALSE;
+}
+
+static void
+fep_g_client_real_resized (FepGClient *client,
+			   guint       cols,
+			   guint       rows)
+{
+  /* g_debug ("%u %u", cols, rows); */
 }
 
 static void
@@ -185,6 +202,7 @@ fep_g_client_class_init (FepGClientClass *klass)
 			    sizeof (FepGClientPrivate));
 
   klass->filter_key_event = fep_g_client_real_filter_key_event;
+  klass->resized = fep_g_client_real_resized;
 
   gobject_class->set_property = fep_g_client_set_property;
   gobject_class->get_property = fep_g_client_get_property;
@@ -207,6 +225,27 @@ fep_g_client_class_init (FepGClientClass *klass)
 		  NULL,
 		  _fep_g_marshal_BOOLEAN__UINT_UINT,
 		  G_TYPE_BOOLEAN,
+		  2,
+		  G_TYPE_UINT,
+		  G_TYPE_UINT);
+
+  /**
+   * FepGClient::resized:
+   * @client: a #FepGClient
+   * @cols: number of columns
+   * @rows: number of rows
+   *
+   * The ::resized signal is emitted when terminal is resized.
+   */
+  signals[RESIZED_SIGNAL] =
+    g_signal_new (I_("resized"),
+		  G_TYPE_FROM_CLASS(gobject_class),
+		  G_SIGNAL_RUN_LAST,
+		  G_STRUCT_OFFSET(FepGClientClass, resized),
+		  NULL,
+		  NULL,
+		  _fep_g_marshal_VOID__UINT_UINT,
+		  G_TYPE_NONE,
 		  2,
 		  G_TYPE_UINT,
 		  G_TYPE_UINT);

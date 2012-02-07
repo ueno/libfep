@@ -162,7 +162,8 @@ _fep_output_status_text_string (Fep *fep, const char *str)
       apply_attr (fep, &fep->attr_tty);
 
       mbs = _fep_strtrunc (str, fep->winsize.ws_col);
-      write (fep->tty_out, mbs, strlen (mbs));
+      if (mbs)
+	write (fep->tty_out, mbs, strlen (mbs));
       free (mbs);
     }
 }

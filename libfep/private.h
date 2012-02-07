@@ -82,11 +82,16 @@ FepList *_fep_list_append (FepList *head, void *data);
 /* control.c */
 typedef enum
   {
+    /* client to server */
     FEP_CONTROL_SET_CURSOR_TEXT = 1,
     FEP_CONTROL_SET_STATUS_TEXT = 2,
     FEP_CONTROL_SEND_DATA = 3,
+    /* server to client */
     FEP_CONTROL_KEY_EVENT = 4,
-    FEP_CONTROL_RESPONSE = 5
+    FEP_CONTROL_RESIZE_EVENT = 5,
+    FEP_CONTROL_SET_OPTION = 6,
+    /* response from client */
+    FEP_CONTROL_RESPONSE = 7
   } FepControlCommand;
 
 struct _FepControlMessage
