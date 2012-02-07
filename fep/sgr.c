@@ -47,6 +47,7 @@ _fep_sgr_params_to_attr (const char **params, int *attr_codes,
 			 FepAttribute *r_attr)
 {
   const char **p;
+  memset (r_attr, 0, sizeof(FepAttribute));
   for (p = params; *p; p++)
     {
       char *endptr;
