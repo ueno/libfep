@@ -65,7 +65,7 @@ _fep_csi_scan (const char *str, size_t len, const char final,
 	      return false;
 	    }
 	  /* F */
-	  if ((final > 0 && *p == final) ||
+	  if ((final < 0 || *p == final) &&
 	      ('\100' <= *p && *p <= '\176'))
 	    {
 	      *r_csi = start;
