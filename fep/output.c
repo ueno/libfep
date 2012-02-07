@@ -37,6 +37,9 @@
 #include "private.h"
 #include <string.h>
 #include <stdlib.h>
+#include <locale.h>
+#include "striconv.h"
+#include <langinfo.h>
 #include <assert.h>
 #include <errno.h>
 
@@ -154,14 +157,16 @@ _fep_output_status_text_string (Fep *fep, const char *str)
 {
   if (*str != '\0')
     {
-      char *mbs;
+      char *local, *mbs;
 
       if (fep->ptybuf.len > 0)
 	_fep_string_clear (&fep->ptybuf);
 
       apply_attr (fep, &fep->attr_tty);
 
-      mbs = _fep_strtrunc (str, fep->winsize.ws_col);
+      local = str_iconv (str, "UTF-8", nl_langinfo (CODESET));
+      mbs = _fep_strtrunc (local, fep->winsize.ws_col);
+      free (local);
       if (mbs)
 	write (fep->tty_out, mbs, strlen (mbs));
       free (mbs);
@@ -259,12 +264,38 @@ _fep_output_cursor_text (Fep *fep, const char *text)
 	_fep_string_clear (&fep->ptybuf);
 
       apply_attr (fep, &fep->attr_tty);
-      fep->cursor_text = _fep_strtrunc (text,
+
+      char *local = str_iconv (text, "UTF-8", nl_langinfo (CODESET));
+      fep->cursor_text = _fep_strtrunc (local,
 					fep->winsize.ws_col - fep->cursor.col);
+      free (local);
+
       if (fep->cursor_text)
 	write (fep->tty_out, fep->cursor_text, strlen (fep->cursor_text));
       _fep_output_restore_cursor (fep);
     }
+}
+
+void
+_fep_output_send_text (Fep *fep, const char *text)
+{
+  char *local = str_iconv (text,
+			   "UTF-8",
+			   nl_langinfo (CODESET));
+  if (local)
+    {
+      ssize_t total = 0;
+      size_t length = strlen (local);
+
+      while (total < length)
+	{
+	  ssize_t bytes_sent = write (fep->pty, local + total, length - total);
+	  if (bytes_sent < 0)
+	    break;
+	  total += bytes_sent;
+	}
+    }
+  free (local);
 }
 
 ssize_t

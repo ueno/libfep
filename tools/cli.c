@@ -32,7 +32,7 @@ usage (FILE *out, const char *program_name)
 	   "where OPTIONS are:\n"
 	   "  -c, --cursor-text=TEXT\tRender text at the cursor position\n"
 	   "  -s, --status-text=TEXT\tRender text at the bottom\n"
-	   "  -d, --send-data=DATA\tSend text to the child process\n"
+	   "  -d, --send-text=TEXT\tSend text to the child process\n"
 	   "  -e, --listen-event\tListen to an event from server\n"
 	   "  -l, --log-file=FILE\tLog file\n"
 	   "  -h, --help\tShow this help\n",
@@ -58,7 +58,7 @@ main (int argc, char **argv)
 {
   FepClient *client;
   int c;
-  char *cursor_text = NULL, *status_text = NULL, *send_data = NULL;
+  char *cursor_text = NULL, *status_text = NULL, *send_text = NULL;
   bool listen_event = false;
   char *log_file = NULL;
 
@@ -69,7 +69,7 @@ main (int argc, char **argv)
 	{
 	  { "cursor-text", required_argument, 0, 'c' },
 	  { "status-text", required_argument, 0, 's' },
-	  { "send-data", required_argument, 0, 'd' },
+	  { "send-text", required_argument, 0, 'd' },
 	  { "listen-event", no_argument, 0, 'e' },
 	  { "log-file", no_argument, 0, 'l' },
 	  { "help", no_argument, 0, 'h' },
@@ -89,7 +89,7 @@ main (int argc, char **argv)
 	  status_text = optarg;
 	  break;
 	case 'd':
-	  send_data = optarg;
+	  send_text = optarg;
 	  break;
 	case 'e':
 	  listen_event = true;
@@ -114,7 +114,7 @@ main (int argc, char **argv)
       exit (1);
     }
 
-  if (!cursor_text && !status_text && !send_data && !listen_event)
+  if (!cursor_text && !status_text && !send_text && !listen_event)
     {
       fprintf (stderr, "No action specified\n");
       exit (1);
@@ -143,9 +143,9 @@ main (int argc, char **argv)
       fep_client_set_status_text (client, status_text);
       exit (0);
     }
-  else if (send_data)
+  else if (send_text)
     {
-      fep_client_send_data (client, send_data, strlen (send_data));
+      fep_client_send_text (client, send_text);
       exit (0);
     }
   else if (listen_event)

@@ -66,6 +66,8 @@ void         fep_g_client_set_cursor_text (FepGClient   *client,
                                            const char   *text);
 void         fep_g_client_set_status_text (FepGClient   *client,
                                            const char   *text);
+void         fep_g_client_send_text       (FepGClient   *client,
+                                           const char   *text);
 void         fep_g_client_send_data       (FepGClient   *client,
                                            const char   *data,
                                            gsize         length);

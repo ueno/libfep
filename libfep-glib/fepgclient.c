@@ -324,6 +324,23 @@ fep_g_client_set_status_text (FepGClient *client,
 }
 
 /**
+ * fep_g_client_send_text:
+ * @client: a #FepGClient
+ * @text: text to be sent
+ *
+ * Request to send @data to the child process of the FEP server.
+ * @text will be converted from UTF-8 to the local encoding in the
+ * server.
+ */
+void
+fep_g_client_send_text (FepGClient *client,
+                        const char *text)
+{
+  FepGClientPrivate *priv = FEP_G_CLIENT_GET_PRIVATE (client);
+  fep_client_send_text (priv->client, text);
+}
+
+/**
  * fep_g_client_send_data:
  * @client: a #FepGClient
  * @data: data to be sent

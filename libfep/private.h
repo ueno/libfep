@@ -85,11 +85,11 @@ typedef enum
     /* client to server */
     FEP_CONTROL_SET_CURSOR_TEXT = 1,
     FEP_CONTROL_SET_STATUS_TEXT = 2,
-    FEP_CONTROL_SEND_DATA = 3,
+    FEP_CONTROL_SEND_TEXT = 3,
+    FEP_CONTROL_SEND_DATA = 4,
     /* server to client */
-    FEP_CONTROL_KEY_EVENT = 4,
-    FEP_CONTROL_RESIZE_EVENT = 5,
-    FEP_CONTROL_SET_OPTION = 6,
+    FEP_CONTROL_KEY_EVENT = 5,
+    FEP_CONTROL_RESIZE_EVENT = 6,
     /* response from client */
     FEP_CONTROL_RESPONSE = 7
   } FepControlCommand;

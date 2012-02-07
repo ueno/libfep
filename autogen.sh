@@ -8,6 +8,8 @@ gnulib-tool --libtool --quiet --import \
     wcsrtombs \
     mbsrtowcs \
     wcswidth \
+    striconv \
+    nl_langinfo \
     strndup || exit 1
 
 gtkdocize || exit 1

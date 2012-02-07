@@ -180,6 +180,8 @@ void             _fep_output_cursor_text   (Fep                *fep,
                                             const char         *text);
 void             _fep_output_status_text   (Fep                *fep,
                                             const char         *text);
+void             _fep_output_send_text     (Fep                *fep,
+					    const char         *text);
 ssize_t          _fep_output_send_data     (Fep                *fep,
                                             const char         *data,
 					    size_t              length);

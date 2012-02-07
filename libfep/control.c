@@ -36,8 +36,10 @@ CommandEntry commands[] =
   {
     { FEP_CONTROL_SET_CURSOR_TEXT, 1 },
     { FEP_CONTROL_SET_STATUS_TEXT, 1 },
+    { FEP_CONTROL_SEND_TEXT, 1 },
     { FEP_CONTROL_SEND_DATA, 1 },
     { FEP_CONTROL_KEY_EVENT, 2 },
+    { FEP_CONTROL_RESIZE_EVENT, 2 },
     { FEP_CONTROL_RESPONSE, 2 },
   };
 
@@ -60,8 +62,10 @@ _fep_control_command_to_string (FepControlCommand command)
     {
       "SET_CURSOR_TEXT",
       "SET_STATUS_TEXT",
+      "SEND_TEXT",
       "SEND_DATA",
       "KEY_EVENT",
+      "RESIZE_EVENT",
       "RESPONSE"
     };
   assert (1 <= command && command <= SIZEOF (commands));

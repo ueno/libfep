@@ -113,6 +113,13 @@ command_set_status_text (Fep *fep,
 }
 
 static void
+command_send_text (Fep *fep,
+		   FepControlMessage *request)
+{
+  _fep_output_send_text (fep, request->args[0].str);
+}
+
+static void
 command_send_data (Fep *fep,
 		   FepControlMessage *request)
 {
@@ -141,7 +148,8 @@ _fep_dispatch_control_message (Fep *fep, int fd)
       {
 	{ FEP_CONTROL_SET_CURSOR_TEXT, command_set_cursor_text },
 	{ FEP_CONTROL_SET_STATUS_TEXT, command_set_status_text },
-	{ FEP_CONTROL_SEND_DATA, command_send_data },
+	{ FEP_CONTROL_SEND_TEXT, command_send_text },
+	{ FEP_CONTROL_SEND_DATA, command_send_data }
       };
   FepControlMessage request;
   int i;

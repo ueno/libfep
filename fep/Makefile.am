@@ -36,6 +36,7 @@ fep_CFLAGS = $(NCURSES_CFLAGS)
 fep_LDADD =					\
 	$(NCURSES_LIBS)				\
 	$(PTY_LIB)				\
+	$(LTLIBICONV)				\
 	$(top_builddir)/lib/libgnu.la		\
 	$(top_builddir)/libfep/libfep.la	\
 	$(NULL)
