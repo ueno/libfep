@@ -33,17 +33,23 @@ usage (FILE *out, const char *program_name)
 	   "  -c, --cursor-text=TEXT\tRender text at the cursor position\n"
 	   "  -s, --status-text=TEXT\tRender text at the bottom\n"
 	   "  -d, --send-data=DATA\tSend text to the child process\n"
-	   "  -k, --listen-key-event\tListen to a new key event\n"
+	   "  -e, --listen-event\tListen to an event from server\n"
 	   "  -l, --log-file=FILE\tLog file\n"
 	   "  -h, --help\tShow this help\n",
 	   program_name);
 }
 
 static int
-key_event_filter (unsigned int keyval, FepModifierType modifiers)
+event_filter (FepEvent *event)
 {
-  printf ("keyval = %u, modifiers = %u\n",
-	  keyval, modifiers);
+  if (event->type == FEP_KEY_PRESS)
+    {
+      FepEventKey *_event = (FepEventKey *)event;
+      printf ("keyval = %u, modifiers = %u\n",
+	      _event->keyval, _event->modifiers);
+    }
+  else
+    printf ("unknown event %u\n", event->type);
   return 1;
 }
 
@@ -52,8 +58,9 @@ main (int argc, char **argv)
 {
   FepClient *client;
   int c;
-  char *cursor_text = NULL, *status_text = NULL, *send_data = NULL, *log_file = NULL;
-  bool key_event = false;
+  char *cursor_text = NULL, *status_text = NULL, *send_data = NULL;
+  bool listen_event = false;
+  char *log_file = NULL;
 
   while (1)
     {
@@ -63,12 +70,12 @@ main (int argc, char **argv)
 	  { "cursor-text", required_argument, 0, 'c' },
 	  { "status-text", required_argument, 0, 's' },
 	  { "send-data", required_argument, 0, 'd' },
-	  { "listen-key-event", no_argument, 0, 'k' },
+	  { "listen-event", no_argument, 0, 'e' },
 	  { "log-file", no_argument, 0, 'l' },
 	  { "help", no_argument, 0, 'h' },
 	  { NULL, 0, 0, 0 }
 	};
-      c = getopt_long (argc, argv, "c:s:d:kl:h",
+      c = getopt_long (argc, argv, "c:s:d:el:h",
 		       long_options, &option_index);
       if (c == -1)
 	break;
@@ -84,8 +91,8 @@ main (int argc, char **argv)
 	case 'd':
 	  send_data = optarg;
 	  break;
-	case 'k':
-	  key_event = true;
+	case 'e':
+	  listen_event = true;
 	  break;
 	case 'l':
 	  log_file = optarg;
@@ -107,7 +114,7 @@ main (int argc, char **argv)
       exit (1);
     }
 
-  if (!cursor_text && !status_text && !send_data && !key_event)
+  if (!cursor_text && !status_text && !send_data && !listen_event)
     {
       fprintf (stderr, "No action specified\n");
       exit (1);
@@ -141,15 +148,15 @@ main (int argc, char **argv)
       fep_client_send_data (client, send_data, strlen (send_data));
       exit (0);
     }
-  else if (key_event)
+  else if (listen_event)
     {
-      fep_client_set_key_event_filter (client,
-				       (FepKeyEventFilter) key_event_filter,
-				       NULL);
-      printf ("# type any key\n");
-      if (fep_client_dispatch_key_event (client) < 0)
+      fep_client_set_event_filter (client,
+				   (FepEventFilter) event_filter,
+				   NULL);
+      printf ("# waiting for an event\n");
+      if (fep_client_dispatch (client) < 0)
 	{
-	  fprintf (stderr, "Can't dispatch key event\n");
+	  fprintf (stderr, "Can't dispatch event\n");
 	  exit (1);
 	}
     }

@@ -109,6 +109,7 @@ FepList *_fep_append_control_message           (FepList           *head,
 void     _fep_control_message_alloc_args       (FepControlMessage *message,
                                                 size_t             n_args);
 void     _fep_control_message_free_args        (FepControlMessage *message);
+void     _fep_control_message_free             (FepControlMessage *message);
 int      _fep_control_message_read_int_arg     (FepControlMessage *message,
                                                 off_t              index,
                                                 int32_t           *r_val);

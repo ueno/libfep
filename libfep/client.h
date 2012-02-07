@@ -19,23 +19,44 @@
 #ifndef __LIBFEP_CLIENT_H__
 #define __LIBFEP_CLIENT_H__
 
-typedef struct _FepClient FepClient;
-typedef int (*FepKeyEventFilter) (unsigned int key, FepModifierType modifiers,
-				  void *data);
+enum _FepEventType
+  {
+    FEP_NOTHING = -1,
+    FEP_KEY_PRESS = 0
+  };
 
-FepClient *fep_client_open                  (const char        *address);
-int        fep_client_get_key_event_poll_fd (FepClient         *client);
-void       fep_client_set_cursor_text       (FepClient         *client,
-                                             const char        *text);
-void       fep_client_set_status_text       (FepClient         *client,
-                                             const char        *text);
-void       fep_client_send_data             (FepClient         *client,
-                                             const char        *data,
-                                             size_t             data_len);
-void       fep_client_set_key_event_filter  (FepClient         *client,
-                                             FepKeyEventFilter  filter,
-                                             void              *data);
-int        fep_client_dispatch_key_event    (FepClient         *client);
-void       fep_client_close                 (FepClient         *client);
+typedef enum _FepEventType FepEventType;
+
+struct _FepEvent
+{
+  FepEventType type;
+};
+typedef struct _FepEvent FepEvent;
+
+struct _FepEventKey
+{
+  FepEvent event;
+  unsigned int keyval;
+  FepModifierType modifiers;
+};
+typedef struct _FepEventKey FepEventKey;
+
+typedef struct _FepClient FepClient;
+typedef int (*FepEventFilter) (FepEvent *event, void *data);
+
+FepClient *fep_client_open             (const char    *address);
+int        fep_client_get_poll_fd      (FepClient     *client);
+void       fep_client_set_cursor_text  (FepClient     *client,
+                                        const char    *text);
+void       fep_client_set_status_text  (FepClient     *client,
+                                        const char    *text);
+void       fep_client_send_data        (FepClient     *client,
+                                        const char    *data,
+                                        size_t         data_len);
+void       fep_client_set_event_filter (FepClient     *client,
+                                        FepEventFilter filter,
+                                        void          *data);
+int        fep_client_dispatch         (FepClient     *client);
+void       fep_client_close            (FepClient     *client);
 
 #endif	/* __LIBFEP_CLIENT_H__ */

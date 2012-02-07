@@ -60,14 +60,23 @@ struct _FepGClientPrivate
 };
 
 static int
-key_event_filter (unsigned int    keyval,
-		  FepModifierType modifiers,
-		  void           *data)
+event_filter (FepEvent *event,
+              void     *data)
 {
   FepGClient *client = FEP_G_CLIENT (data);
-  gboolean retval;
-  g_signal_emit (client, signals[FILTER_KEY_EVENT_SIGNAL], 0,
-		 keyval, modifiers, &retval);
+  FepEventKey *_event;
+  gboolean retval = FALSE;
+
+  switch (event->type)
+    {
+    case FEP_KEY_PRESS:
+      _event = (FepEventKey *)event;
+      g_signal_emit (client, signals[FILTER_KEY_EVENT_SIGNAL], 0,
+		     _event->keyval, _event->modifiers, &retval);
+      break;
+    default:
+      break;
+    }
   return retval ? 1 : 0;
 }
 
@@ -82,9 +91,9 @@ initable_init (GInitable    *initable,
   priv->client = fep_client_open (priv->address);
   if (priv->client)
     {
-      fep_client_set_key_event_filter (priv->client,
-				       (FepKeyEventFilter) key_event_filter,
-				       client);
+      fep_client_set_event_filter (priv->client,
+				   (FepEventFilter) event_filter,
+				   client);
 #ifdef DEBUG
       fep_set_log_file ("fepgclient.log");
       fep_set_log_level (FEP_LOG_LEVEL_DEBUG);
@@ -231,7 +240,7 @@ fep_g_client_init (FepGClient *client)
  * %NULL, it gets the address from the environment variable
  * `LIBFEP_CONTROL_SOCK`.
  *
- * Returns: a new FepGClient.
+ * Returns: a new #FepGClient.
  */
 FepGClient *
 fep_g_client_new (const char   *address,
@@ -293,22 +302,22 @@ fep_g_client_send_data (FepGClient *client,
 }
 
 /**
- * fep_g_client_get_key_event_poll_fd:
- * @client: a FepGClient
+ * fep_g_client_get_poll_fd:
+ * @client: a #FepGClient
  *
  * Get the file descriptor of the control socket which can be used by poll().
  *
  * Returns: a file descriptor
  */
 gint
-fep_g_client_get_key_event_poll_fd (FepGClient *client)
+fep_g_client_get_poll_fd (FepGClient *client)
 {
   FepGClientPrivate *priv = FEP_G_CLIENT_GET_PRIVATE (client);
-  return fep_client_get_key_event_poll_fd (priv->client);
+  return fep_client_get_poll_fd (priv->client);
 }
 
 /**
- * fep_g_client_dispatch_key_event:
+ * fep_g_client_dispatch:
  * @client: a #FepGClient
  *
  * Dispatch a key event.
@@ -316,9 +325,9 @@ fep_g_client_get_key_event_poll_fd (FepGClient *client)
  * Returns: %TRUE if success, %FALSE on error.
  */
 gboolean
-fep_g_client_dispatch_key_event (FepGClient *client)
+fep_g_client_dispatch (FepGClient *client)
 {
   FepGClientPrivate *priv = FEP_G_CLIENT_GET_PRIVATE (client);
-  gint retval = fep_client_dispatch_key_event (priv->client);
+  gint retval = fep_client_dispatch (priv->client);
   return retval == 0;
 }

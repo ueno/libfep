@@ -168,6 +168,10 @@ void             _fep_output_change_scroll_region
                                            (Fep                *fep,
                                             int                 start,
                                             int                 end);
+void             _fep_output_cursor_address
+                                           (Fep                *fep,
+					    int                 row,
+					    int                 col);
 void             _fep_output_string_from_pty
                                            (Fep                *fep,
                                             const char         *str,

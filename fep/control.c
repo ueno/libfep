@@ -168,6 +168,7 @@ _fep_dispatch_control_message (Fep *fep, int fd)
     ;
   if (i == SIZEOF (handlers))
     {
+      _fep_control_message_free_args (&request);
       fep_log (FEP_LOG_LEVEL_WARNING,
 	       "no handler defined for %d", request.command);
       return -1;

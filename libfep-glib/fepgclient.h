@@ -53,19 +53,19 @@ struct _FepGClientClass {
   gpointer padding[32];
 };
 
-GType        fep_g_client_get_type              (void) G_GNUC_CONST;
-FepGClient * fep_g_client_new                   (const char   *address,
-                                                 GCancellable *cancellable,
-                                                 GError      **error);
-void         fep_g_client_set_cursor_text       (FepGClient   *client,
-                                                 const char   *text);
-void         fep_g_client_set_status_text       (FepGClient   *client,
-                                                 const char   *text);
-void         fep_g_client_send_data             (FepGClient   *client,
-                                                 const char   *data,
-                                                 gsize         length);
-gint         fep_g_client_get_key_event_poll_fd (FepGClient   *client);
-gboolean     fep_g_client_dispatch_key_event    (FepGClient   *client);
+GType        fep_g_client_get_type        (void) G_GNUC_CONST;
+FepGClient * fep_g_client_new             (const char   *address,
+                                           GCancellable *cancellable,
+                                           GError      **error);
+void         fep_g_client_set_cursor_text (FepGClient   *client,
+                                           const char   *text);
+void         fep_g_client_set_status_text (FepGClient   *client,
+                                           const char   *text);
+void         fep_g_client_send_data       (FepGClient   *client,
+                                           const char   *data,
+                                           gsize         length);
+gint         fep_g_client_get_poll_fd     (FepGClient   *client);
+gboolean     fep_g_client_dispatch        (FepGClient   *client);
 
 G_END_DECLS
 
