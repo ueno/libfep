@@ -357,8 +357,8 @@ main_loop (Fep *fep)
 	  for (i = 0; i < bytes_read; i++)
 	    {
 	      uint32_t key;
-	      size_t key_len;
-	      uint32_t state = 0;
+	      uint32_t state = 0, _state;
+	      char *endptr;
 	      FepReadKeyResult result;
 	      FepControlMessage request;
 	      int j;
@@ -367,10 +367,11 @@ main_loop (Fep *fep)
 	      result = _fep_read_key_from_string (buf + i,
 						  bytes_read - i,
 						  &key,
-						  &key_len);
+						  &_state,
+						  &endptr);
+	      state |= _state;
 	      if (result != FEP_READ_KEY_OK)
 		{
-		  uint32_t _state;
 		  _fep_char_to_key (buf[i], &key, &_state);
 		  state |= _state;
 
@@ -386,7 +387,7 @@ main_loop (Fep *fep)
 		      state = FEP_MOD1_MASK;
 		      continue;
 		    }
-		  key_len = 1;
+		  endptr = buf + i + 1;
 		}
 
 	      handled = false;
@@ -415,13 +416,13 @@ main_loop (Fep *fep)
 	      if (!handled)
 		{
 		  if (state & FEP_MOD1_MASK)
-		    write (fep->pty, buf + i - 1, key_len + 1);
+		    write (fep->pty, buf + i - 1, endptr - (buf + i - 1));
 		  else
-		    write (fep->pty, buf + i, key_len);
+		    write (fep->pty, buf + i, endptr - (buf + i));
 		}
 
 	      state = 0;
-	      i += (key_len - 1);
+	      i += endptr - (buf + i) - 1;
 	    }
 	}
 

@@ -37,17 +37,28 @@
 #include "private.h"
 #include <string.h>
 #include <stdlib.h>
+#include <errno.h>
+#include <assert.h>
 
-struct EscKeyvalEntry
+struct CursorStateEntry
 {
-  char *code;
+  int param;
+  FepModifierType state;
+} cursor_states[] = {
+  { 2, FEP_SHIFT_MASK },
+  { 5, FEP_CONTROL_MASK },
+};
+
+struct CursorKeyvalEntry
+{
+  char final;
   uint32_t keyval;
-} esc_keyvals[] =
+} cursor_keyvals[] =
   {
-    { "\033[A", FEP_Up },
-    { "\033[B", FEP_Down },
-    { "\033[C", FEP_Right },
-    { "\033[D", FEP_Left },
+    { 'A', FEP_Up },
+    { 'B', FEP_Down },
+    { 'C', FEP_Right },
+    { 'D', FEP_Left },
   };
 
 struct CapKeyvalEntry
@@ -58,10 +69,6 @@ struct CapKeyvalEntry
   {
     { "key_backspace", FEP_BackSpace },
     { "key_dc", FEP_Delete },
-    { "key_left", FEP_Left },
-    { "key_up", FEP_Up },
-    { "key_right", FEP_Right },
-    { "key_down", FEP_Down },
     { "key_ppage", FEP_Prior },
     { "key_npage", FEP_Next },
     { "key_home", FEP_Home },
@@ -143,26 +150,65 @@ _fep_char_to_key (char      tty,
   return key != 0;
 }
 
+static uint32_t
+_fep_get_state_from_cursor (FepCSI *csi)
+{
+  char **params = _fep_strsplit (csi->params, ";", -1);
+  uint32_t state = 0;
+  if (_fep_strv_length (params) == 2)
+    {
+      int param, i;
+      char *endptr;
+
+      errno = 0;
+      param = strtoul (params[1], &endptr, 10);
+      assert (errno == 0 && *endptr == '\0');
+
+      for (i = 0; i < SIZEOF (cursor_states); i++)
+	if (cursor_states[i].param == param)
+	  {
+	    state = cursor_states[i].state;
+	    break;
+	  }
+    }
+  _fep_strfreev (params);
+  return state;
+}
+
 FepReadKeyResult
 _fep_read_key_from_string (const char *str,
 			   int         str_len,
 			   uint32_t   *r_key,
-			   size_t     *r_key_len)
+			   uint32_t   *r_state,
+			   char      **r_endptr)
 {
   FepReadKeyResult retval = FEP_READ_KEY_ERROR;
+  FepCSI *csi;
+  char *endptr;
   int i;
 
-  for (i = 0; i < SIZEOF (esc_keyvals); i++)
+  csi = _fep_csi_parse (str, str_len, &endptr);
+  if (csi)
     {
-      size_t len = strlen (esc_keyvals[i].code);
-      if (strncmp (str, esc_keyvals[i].code, len) == 0)
+      for (i = 0; i < SIZEOF (cursor_keyvals); i++)
 	{
-	  *r_key = esc_keyvals[i].keyval;
-	  *r_key_len = len;
-	  return FEP_READ_KEY_OK;
+	  if (cursor_keyvals[i].final == csi->final)
+	    {
+	      *r_key = cursor_keyvals[i].keyval;
+	      *r_state = _fep_get_state_from_cursor (csi);
+	      if (r_endptr)
+		*r_endptr = endptr;
+	      return FEP_READ_KEY_OK;
+	    }
 	}
-      else if (strncmp (str, esc_keyvals[i].code, str_len) == 0)
-	retval = FEP_READ_KEY_NOT_ENOUGH;
+      _fep_csi_free (csi);
+    }
+  else
+    {
+      *r_key = 0;
+      if (r_endptr)
+	*r_endptr = str;
+      return FEP_READ_KEY_NOT_ENOUGH;
     }
 
   for (i = 0; i < SIZEOF (cap_keyvals); i++)
@@ -174,7 +220,8 @@ _fep_read_key_from_string (const char *str,
 	  if (strncmp (str, esc, len) == 0)
 	    {
 	      *r_key = cap_keyvals[i].keyval;
-	      *r_key_len = len;
+	      if (r_endptr)
+		*r_endptr = str + len;
 	      return FEP_READ_KEY_OK;
 	    }
 	  else if (strncmp (str, esc, str_len) == 0)
@@ -183,6 +230,7 @@ _fep_read_key_from_string (const char *str,
     }
 
   *r_key = 0;
-  *r_key_len = 0;
+  if (r_endptr)
+    *r_endptr = str;
   return retval;
 }

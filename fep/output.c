@@ -63,14 +63,16 @@ _fep_putp (Fep *fep, const char *str)
 void
 _fep_output_set_attributes (Fep *fep, const FepAttribute *attr)
 {
-  char **params, *params_str, *str;
+  char **params, *str;
+  FepCSI csi;
 
   params = _fep_sgr_params_from_attr (attr, fep->attr_codes);
-  params_str = _fep_strjoinv (params, ";");
+  csi.params = _fep_strjoinv (params, ";");
   _fep_strfreev (params);
-
-  str = _fep_csi_format (params_str, "", 'm');
-  free (params_str);
+  csi.intermediate = "";
+  csi.final = 'm';
+  str = _fep_csi_format (&csi);
+  free (csi.params);
 
   _fep_putp (fep, str);
   free (str);
@@ -131,18 +133,19 @@ _fep_output_string_from_pty (Fep *fep, const char *str, int str_len)
       p = str;
       while (_fep_csi_scan (p, str_len, 'm', &sgr, &sgr_len))
 	{
-	  const char *params_str, *intermediate_str;
-	  char final;
-	  if (_fep_csi_parse (sgr, sgr_len,
-			      &params_str, &intermediate_str, &final))
+	  FepCSI *csi;
+	  char *endptr;
+	  csi = _fep_csi_parse (sgr, sgr_len, NULL);
+	  if (csi)
 	    {
-	      char **params = _fep_strsplit (params_str, ";", -1);
+	      char **params = _fep_strsplit (csi->params, ";", -1);
 	      FepAttribute attr;
 	      _fep_sgr_params_to_attr ((const char **) params,
 				       fep->attr_codes,
 				       &attr);
 	      _fep_strfreev (params);
 	      memcpy (&fep->attr, &attr, sizeof(FepAttribute));
+	      _fep_csi_free (csi);
 	    }
 	  p = sgr + sgr_len;
 	}

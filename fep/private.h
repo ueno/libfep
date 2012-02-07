@@ -114,6 +114,15 @@ struct _Fep
   struct termios orig_termios;
 };
 
+struct _FepCSI
+{
+  char *params;
+  char *intermediate;
+  char final;
+};
+
+typedef struct _FepCSI FepCSI;
+
 extern const FepAttribute _fep_empty_attr;
 
 /* csi.c */
@@ -122,14 +131,11 @@ bool             _fep_csi_scan             (const char         *str,
                                             const char          final,
                                             const char        **r_csi,
                                             size_t             *r_csi_len);
-bool             _fep_csi_parse            (const char         *str,
+FepCSI          *_fep_csi_parse            (const char         *str,
                                             size_t              len,
-                                            const char        **r_params,
-                                            const char        **r_intermediate,
-                                            char               *r_final);
-char *           _fep_csi_format           (const char         *params,
-                                            const char         *intermediate,
-                                            char                final);
+					    char              **endptr);
+char *           _fep_csi_format           (FepCSI             *csi);
+void             _fep_csi_free             (FepCSI             *csi);
 
 /* sgr.c */
 void             _fep_sgr_params_to_attr   (const char        **params,
@@ -149,7 +155,8 @@ bool             _fep_char_to_key          (char                tty,
 FepReadKeyResult _fep_read_key_from_string (const char         *str,
                                             int                 str_len,
                                             uint32_t           *r_key,
-                                            size_t             *r_key_len);
+					    uint32_t           *r_state,
+                                            char              **r_endptr);
 
 /* input.c */
 ssize_t          _fep_read                 (Fep                *fep,

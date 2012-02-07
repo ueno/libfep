@@ -129,6 +129,15 @@ _fep_strjoinv (char **strv, const char *delimiter)
   return str;
 }
 
+size_t
+_fep_strv_length (char **strv)
+{
+  size_t length = 0;
+  while (*strv++)
+    length++;
+  return length;
+}
+
 void
 _fep_strfreev (char **strv)
 {

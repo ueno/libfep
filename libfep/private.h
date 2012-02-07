@@ -64,6 +64,7 @@ char ** _fep_strsplit_set  (const char *str,
                             int         max_tokens);
 char *  _fep_strjoinv      (char      **strv,
                             const char *delimiter);
+size_t  _fep_strv_length   (char      **strv);
 void    _fep_strfreev      (char      **strv);
 int     _fep_strwidth      (const char *str);
 char *  _fep_strtrunc      (const char *str,

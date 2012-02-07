@@ -47,7 +47,7 @@ _fep_sgr_params_to_attr (const char **params, int *attr_codes,
 			 FepAttribute *r_attr)
 {
   const char **p;
-  for (p = params; p; p++)
+  for (p = params; *p; p++)
     {
       char *endptr;
       int param;
@@ -157,45 +157,49 @@ _fep_sgr_get_attr_codes (int *attr_codes)
   static const struct
   {
     char *name;
+    int n_args;
     int index;
     FepAttrType code;
   } name_code[] =
       {
-	{ "enter_underline_mode", 0, FEP_ATTR_TYPE_ENTER_UNDERLINE },
-	{ "exit_underline_mode", 0, FEP_ATTR_TYPE_EXIT_UNDERLINE },
-	{ "enter_standout_mode", 0, FEP_ATTR_TYPE_ENTER_STANDOUT },
-	{ "exit_standout_mode", 0, FEP_ATTR_TYPE_EXIT_STANDOUT },
-	{ "enter_bold_mode", 0, FEP_ATTR_TYPE_ENTER_BOLD },
-	{ "enter_blink_mode", 0, FEP_ATTR_TYPE_ENTER_BLINK },
-	{ "orig_pair", 0, FEP_ATTR_TYPE_ORIG_PAIR },
-	{ "orig_pair", 1, FEP_ATTR_TYPE_ORIG_FORE },
-	{ "orig_pair", 2, FEP_ATTR_TYPE_ORIG_BACK }
+	{ "enter_underline_mode", 1, 0, FEP_ATTR_TYPE_ENTER_UNDERLINE },
+	{ "exit_underline_mode", 1, 0, FEP_ATTR_TYPE_EXIT_UNDERLINE },
+	{ "enter_standout_mode", 1, 0, FEP_ATTR_TYPE_ENTER_STANDOUT },
+	{ "exit_standout_mode", 1, 0, FEP_ATTR_TYPE_EXIT_STANDOUT },
+	{ "enter_bold_mode", 1, 0, FEP_ATTR_TYPE_ENTER_BOLD },
+	{ "enter_blink_mode", 1, 0, FEP_ATTR_TYPE_ENTER_BLINK },
+	{ "orig_pair", 1, 0, FEP_ATTR_TYPE_ORIG_PAIR },
+	{ "orig_pair", 2, 0, FEP_ATTR_TYPE_ORIG_FORE },
+	{ "orig_pair", 2, 1, FEP_ATTR_TYPE_ORIG_BACK }
       };
   int i;
 
   for (i = 0; i < SIZEOF (name_code); i++)
     {
-      const char *csi = _fep_cap_get_string (name_code[i].name);
-      const char *params, *intermediate;
-      char final;
+      const char *str = _fep_cap_get_string (name_code[i].name);
+      FepCSI *csi;
 
-      if (csi
-	  && _fep_csi_parse (csi, strlen (csi),
-			     &params,
-			     &intermediate,
-			     &final)
-	  && final == 'm')
+      if (str
+	  && (csi = _fep_csi_parse (str, strlen (str), NULL)) != NULL)
 	{
-	  char **_params = _fep_strsplit (params, ";", -1);
-	  char *endptr;
-	  int code;
+	  if (csi->final == 'm')
+	    {
+	      char **_params = _fep_strsplit (csi->params, ";", -1);
+	      char *endptr;
+	      int code;
 
-	  errno = 0;
-	  code = strtoul (_params[name_code[i].index], &endptr, 10);
-	  if (errno == 0 && endptr == '\0')
-	    attr_codes[name_code[i].code] = code;
-	  _fep_strfreev (_params);
+	      if (_fep_strv_length (_params) == name_code[i].n_args)
+		{
+		  errno = 0;
+		  code = strtoul (_params[name_code[i].index], &endptr, 10);
+		  if (errno == 0 && endptr == '\0')
+		    attr_codes[name_code[i].code] = code;
+		}
+	      else
+		attr_codes[name_code[i].code] = -1;
+	      _fep_strfreev (_params);
+	    }
+	  _fep_csi_free (csi);
 	}
     }
 }
-

@@ -79,54 +79,80 @@ _fep_csi_scan (const char *str, size_t len, const char final,
   return false;
 }
 
-bool
-_fep_csi_parse (const char *str, size_t len,
-		const char **r_params,
-		const char **r_intermediate,
-		char *r_final)
+FepCSI *
+_fep_csi_parse (const char *str,
+                size_t      len,
+                char      **r_endptr)
 {
-  const char *p;
-  const char *params, *intermediate;
+  const char *p, *start;
+  FepCSI csi, *r_csi;
 
-  if (len <= 3 || strncmp (str, "\033\133", 2) != 0)
-    return false;
+  if (len < 3 || strncmp (str, "\033\133", 2) != 0)
+    return NULL;
 
   /* P */
-  params = str + 2;
-  for (p = params; p - str < len && '\060'<= *p && *p <= '\077'; p++)
+  start = str + 2;
+  for (p = start; p - str < len && '\060'<= *p && *p <= '\077'; p++)
     ;
   if (p - str == len)
-    return false;
-
+    {
+      fep_log (FEP_LOG_LEVEL_DEBUG, "premature CSI at P");
+      return NULL;
+    }
+  csi.params = malloc (p - start + 1);
+  memcpy (csi.params, start, p - start);
+  csi.params[p - start] = '\0';
+  
   /* I */
-  intermediate = p;
+  start = p;
   for (; p - str < len && '\040'<= *p && *p <= '\057'; p++)
     ;
   if (p - str == len)
-    return false;
+    {
+      free (csi.params);
+      fep_log (FEP_LOG_LEVEL_DEBUG, "premature CSI at I");
+      return NULL;
+    }
+  csi.intermediate = malloc (p - start + 1);
+  memcpy (csi.intermediate, start, p - start);
+  csi.intermediate[p - start] = '\0';
 
   /* F */
-  p++;
   if (p - str == len)
-    return false;
+    {
+      free (csi.params);
+      free (csi.intermediate);
+      fep_log (FEP_LOG_LEVEL_DEBUG, "premature CSI at F \"%s\" \"%s\"", str, p);
+      return NULL;
+    }
+  csi.final = *p++;
 
-  *r_params = params;
-  *r_intermediate = intermediate;
-  *r_final = *p;
-  return true;
+  r_csi = malloc (sizeof(FepCSI));
+  memcpy (r_csi, &csi, sizeof(FepCSI));
+  if (r_endptr)
+    *r_endptr = (char *) p;
+  return r_csi;
 }
 
 char *
-_fep_csi_format (const char *params,
-                 const char *intermediate,
-                 char        final)
+_fep_csi_format (FepCSI *csi)
 {
   char *str;
   size_t len;
 
-  len = 3 + strlen (params) + strlen (intermediate);
+  len = 3 + strlen (csi->params) + strlen (csi->intermediate);
   str = calloc (len + 1, sizeof(char));
-  snprintf (str, len + 1, "\033\133%s%s%c", params, intermediate, final);
+  snprintf (str, len + 1, "\033\133%s%s%c",
+	    csi->params, csi->intermediate, csi->final);
 
   return str;
 }
+
+void
+_fep_csi_free (FepCSI *csi)
+{
+  free (csi->params);
+  free (csi->intermediate);
+  free (csi);
+}
+
