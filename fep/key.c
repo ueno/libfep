@@ -175,62 +175,41 @@ _fep_get_state_from_cursor (FepCSI *csi)
   return state;
 }
 
-FepReadKeyResult
-_fep_read_key_from_string (const char *str,
-			   int         str_len,
-			   uint32_t   *r_key,
-			   uint32_t   *r_state,
-			   char      **r_endptr)
+bool
+_fep_csi_to_key (FepCSI   *csi,
+                 uint32_t *r_key,
+                 uint32_t *r_state)
 {
-  FepReadKeyResult retval = FEP_READ_KEY_ERROR;
-  FepCSI *csi;
-  char *endptr;
+  char *csi_str;
   int i;
 
-  csi = _fep_csi_parse (str, str_len, &endptr);
-  if (csi)
+  for (i = 0; i < SIZEOF (cursor_keyvals); i++)
     {
-      for (i = 0; i < SIZEOF (cursor_keyvals); i++)
+      if (cursor_keyvals[i].final == csi->final)
 	{
-	  if (cursor_keyvals[i].final == csi->final)
-	    {
-	      *r_key = cursor_keyvals[i].keyval;
-	      *r_state = _fep_get_state_from_cursor (csi);
-	      if (r_endptr)
-		*r_endptr = endptr;
-	      return FEP_READ_KEY_OK;
-	    }
+	  *r_key = cursor_keyvals[i].keyval;
+	  *r_state = _fep_get_state_from_cursor (csi);
+	  return true;
 	}
-      _fep_csi_free (csi);
-    }
-  else
-    {
-      *r_key = 0;
-      if (r_endptr)
-	*r_endptr = str;
-      return FEP_READ_KEY_NOT_ENOUGH;
     }
 
+  csi_str = _fep_csi_format (csi);
   for (i = 0; i < SIZEOF (cap_keyvals); i++)
     {
-      const char *esc = _fep_cap_get_string (cap_keyvals[i].name);
-      if (esc != NULL)
+      const char *cap_str = _fep_cap_get_string (cap_keyvals[i].name);
+      if (cap_str)
 	{
-	  size_t len = strlen (esc);
-	  if (strncmp (str, esc, len) == 0)
+	  size_t len = strlen (cap_str);
+	  if (strncmp (csi_str, cap_str, len) == 0)
 	    {
 	      *r_key = cap_keyvals[i].keyval;
-	      if (r_endptr)
-		*r_endptr = str + len;
-	      return FEP_READ_KEY_OK;
+	      *r_state = 0;
+	      return true;
 	    }
-	  else if (strncmp (str, esc, str_len) == 0)
-	    retval = FEP_READ_KEY_NOT_ENOUGH;
 	}
     }
 
   *r_key = 0;
-  if (r_endptr)
-    *r_endptr = str;
-  return retval;
+  *r_state = 0;
+  return false;
 }

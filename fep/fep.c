@@ -354,73 +354,68 @@ main_loop (Fep *fep)
 
 	  buf[bytes_read] = '\0';
 
-	  for (i = 0; i < bytes_read; i++)
+	  for (i = 0; i < bytes_read; )
 	    {
-	      uint32_t key;
+	      uint32_t keyval;
 	      uint32_t state;
 	      char *endptr;
-	      FepReadKeyResult result;
-	      FepControlMessage request;
-	      int j;
-	      bool handled;
+	      bool is_key_read, is_key_handled;
+	      FepCSI *csi;
 
-	      result = _fep_read_key_from_string (buf + i,
-						  bytes_read - i,
-						  &key,
-						  &state,
-						  &endptr);
-	      if (result != FEP_READ_KEY_OK)
+	      is_key_read = false;
+	      csi = _fep_csi_parse (buf + i, bytes_read - i, &endptr);
+	      if (csi)
 		{
-		  _fep_char_to_key (buf[i], &key, &state);
-
-		  if (buf[i] == '\033' && i == bytes_read - 1)
+		  if (_fep_csi_to_key (csi, &keyval, &state))
+		    is_key_read = true;
+		}
+	      else
+		{
+		  if (_fep_char_to_key (buf[i], &keyval, &state))
 		    {
-		      fep_log (FEP_LOG_LEVEL_WARNING,
-			       "premature key sequence");
-		      result = FEP_READ_KEY_NOT_ENOUGH;
+		      endptr = buf + i + 1;
+		      is_key_read = true;
 		    }
-
-		  if (buf[i] == '\033' && i < bytes_read - 1)
-		    {
-		      state = FEP_MOD1_MASK;
-		      continue;
-		    }
-		  endptr = buf + i + 1;
 		}
 
-	      handled = false;
-	      request.command = FEP_CONTROL_KEY_EVENT;
-	      _fep_control_message_alloc_args (&request, 2);
-	      _fep_control_message_write_int_arg (&request, 0, (int32_t) key);
-	      _fep_control_message_write_int_arg (&request, 1, (int32_t) state);
-	      for (j = 0; j < fep->n_clients; j++)
+	      is_key_handled = false;
+	      if (is_key_read)
 		{
-		  FepControlMessage response;
-		  if (fep->clients[j] < 0)
-		    continue;
-		  if (_fep_transceive_control_message (fep->clients[j],
-						       &request,
-						       &response) == 0)
-		    {
-		      int32_t intval;
-		      _fep_control_message_read_int_arg (&response, 1, &intval);
-		      if (intval > 0)
-			handled = true;
-		      _fep_control_message_free_args (&response);
-		    }
-		  FD_CLR (fep->clients[j], &fds);
-		}
-	      _fep_control_message_free_args (&request);
-	      if (!handled)
-		{
-		  if (state & FEP_MOD1_MASK)
-		    write (fep->pty, buf + i - 1, endptr - (buf + i - 1));
-		  else
-		    write (fep->pty, buf + i, endptr - (buf + i));
-		}
+		  FepControlMessage request;
+		  int j;
 
-	      state = 0;
-	      i += endptr - (buf + i) - 1;
+		  request.command = FEP_CONTROL_KEY_EVENT;
+		  _fep_control_message_alloc_args (&request, 2);
+		  _fep_control_message_write_int_arg (&request,
+						      0,
+						      (int32_t) keyval);
+		  _fep_control_message_write_int_arg (&request,
+						      1,
+						      (int32_t) state);
+		  for (j = 0; j < fep->n_clients; j++)
+		    {
+		      FepControlMessage response;
+		      if (fep->clients[j] < 0)
+			continue;
+		      if (_fep_transceive_control_message (fep->clients[j],
+							   &request,
+							   &response) == 0)
+			{
+			  int32_t intval;
+			  _fep_control_message_read_int_arg (&response,
+							     1,
+							     &intval);
+			  if (intval > 0)
+			    is_key_handled = true;
+			  _fep_control_message_free_args (&response);
+			}
+		      FD_CLR (fep->clients[j], &fds);
+		    }
+		  _fep_control_message_free_args (&request);
+		}
+	      if (!is_key_handled)
+		write (fep->pty, buf + i, endptr - (buf + i));
+	      i += endptr - (buf + i);
 	    }
 	}
 

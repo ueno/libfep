@@ -149,14 +149,12 @@ void             _fep_sgr_get_attr_codes   (int                *attr_codes);
 const char *     _fep_cap_get_string       (const char         *name);
 
 /* key.c */
+bool             _fep_csi_to_key           (FepCSI             *csi,
+                                            uint32_t           *r_key,
+					    uint32_t           *r_state);
 bool             _fep_char_to_key          (char                tty,
                                             uint32_t           *r_key,
                                             uint32_t           *r_state);
-FepReadKeyResult _fep_read_key_from_string (const char         *str,
-                                            int                 str_len,
-                                            uint32_t           *r_key,
-					    uint32_t           *r_state,
-                                            char              **r_endptr);
 
 /* input.c */
 ssize_t          _fep_read                 (Fep                *fep,
