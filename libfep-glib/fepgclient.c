@@ -297,30 +297,34 @@ fep_g_client_new (const char   *address,
  * fep_g_client_set_cursor_text:
  * @client: a #FepGClient
  * @text: a cursor text
+ * @attr: (allow-none): a #FepGAttribute
  *
  * Request to display @text at the cursor position on the terminal.
  */
 void
-fep_g_client_set_cursor_text (FepGClient *client,
-                              const char *text)
+fep_g_client_set_cursor_text (FepGClient    *client,
+                              const char    *text,
+                              FepGAttribute *attr)
 {
   FepGClientPrivate *priv = FEP_G_CLIENT_GET_PRIVATE (client);
-  fep_client_set_cursor_text (priv->client, text);
+  fep_client_set_cursor_text (priv->client, text, attr);
 }
 
 /**
  * fep_g_client_set_status_text:
  * @client: a #FepGClient
  * @text: a status text
+ * @attr: (allow-none): a #FepGAttribute
  *
  * Request to display @text at the bottom of the terminal.
  */
 void
-fep_g_client_set_status_text (FepGClient *client,
-                              const char *text)
+fep_g_client_set_status_text (FepGClient    *client,
+                              const char    *text,
+                              FepGAttribute *attr)
 {
   FepGClientPrivate *priv = FEP_G_CLIENT_GET_PRIVATE (client);
-  fep_client_set_status_text (priv->client, text);
+  fep_client_set_status_text (priv->client, text, attr);
 }
 
 /**

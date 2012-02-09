@@ -61,12 +61,12 @@ _fep_putp (Fep *fep, const char *str)
 }
 
 void
-_fep_output_set_attributes (Fep *fep, const FepAttribute *attr)
+_fep_output_set_attributes (Fep *fep, const FepSgrAttr *attr)
 {
   char **params, *str;
   FepCSI csi;
 
-  params = _fep_sgr_params_from_attr (attr, fep->attr_codes);
+  params = _fep_sgr_params_from_attr (attr, fep->sgr_codes);
   csi.params = _fep_strjoinv (params, ";");
   _fep_strfreev (params);
   csi.intermediate = "";
@@ -74,10 +74,11 @@ _fep_output_set_attributes (Fep *fep, const FepAttribute *attr)
   str = _fep_csi_format (&csi);
   free (csi.params);
 
+  fep_log (FEP_LOG_LEVEL_DEBUG, "set attributes %u %u %u",
+	   attr->attr, attr->foreground, attr->background);
+
   _fep_putp (fep, str);
   free (str);
-
-  memcpy (&fep->attr, attr, sizeof(FepAttribute));
 }
 
 void
@@ -89,34 +90,30 @@ _fep_output_change_scroll_region (Fep *fep, int start, int end)
 }
 
 static void
-apply_attr (Fep *fep, const FepAttribute *attr)
+apply_attr (Fep *fep, const FepSgrAttr *attr)
 {
-  if ((fep->attr.underline && !attr->underline)
-      || (fep->attr.standout && !attr->standout)
-      || (fep->attr.bold && !attr->bold)
-      || (fep->attr.blink && !attr->blink)
+  if ((fep->attr.attr ^ ~attr->attr) & FEP_SGR_ATTR_MASK
       || (fep->attr.foreground != 0 && attr->foreground == 0)
       || (fep->attr.background != 0 && attr->background == 0))
-    _fep_output_set_attributes (fep, &_fep_empty_attr);
+    {
+      /* if one of attr bits are cleared, reset to the new value */
+      _fep_putp (fep, exit_attribute_mode);
+      _fep_output_set_attributes (fep, attr);
+    }
   else
     {
-      FepAttribute _attr;
-
-      memset (&_attr, 0, sizeof(FepAttribute));
-      if (fep->attr.underline == attr->underline)
-	_attr.underline = FALSE;
-      if (fep->attr.standout == attr->standout)
-	_attr.standout = FALSE;
-      if (fep->attr.bold == attr->bold)
-	_attr.bold = FALSE;
-      if (fep->attr.blink == attr->blink)
-	_attr.blink = FALSE;
-      if (fep->attr.foreground == attr->foreground)
-	_attr.foreground = FALSE;
-      if (fep->attr.background == attr->background)
-	_attr.background = FALSE;
+      /* if one of attr bits are being set, apply the difference */
+      FepSgrAttr _attr;
+      _attr.attr = (fep->attr.attr ^ attr->attr) & attr->attr;
+      _attr.foreground = attr->foreground;
+      _attr.background = attr->background;
+      if (fep->attr.foreground == _attr.foreground)
+	_attr.foreground = 0;
+      if (fep->attr.background == _attr.background)
+	_attr.background = 0;
       _fep_output_set_attributes (fep, &_attr);
     }
+  memcpy (&fep->attr, attr, sizeof(FepSgrAttr));
 }
 
 void
@@ -124,7 +121,7 @@ _fep_output_string_from_pty (Fep *fep, const char *str, int str_len)
 {
   if (str_len > 0)
     {
-      const char *p, *sgr;
+      char *p, *sgr;
       size_t sgr_len;
 
       apply_attr (fep, &fep->attr_pty);
@@ -138,13 +135,20 @@ _fep_output_string_from_pty (Fep *fep, const char *str, int str_len)
 	  csi = _fep_csi_parse (sgr, sgr_len, NULL);
 	  if (csi)
 	    {
-	      char **params = _fep_strsplit (csi->params, ";", -1);
-	      FepAttribute attr;
+	      char **params = _fep_strsplit (csi->params, ";", -1), c;
+	      FepSgrAttr attr;
 	      _fep_sgr_params_to_attr ((const char **) params,
-				       fep->attr_codes,
+				       fep->sgr_codes,
 				       &attr);
+	      c = sgr[sgr_len];
+	      sgr[sgr_len] = '\0';
+	      fep_log (FEP_LOG_LEVEL_DEBUG, "attr read %u %u %u",
+		       attr.attr,
+		       attr.foreground,
+		       attr.background);
+	      sgr[sgr_len] = c;
 	      _fep_strfreev (params);
-	      memcpy (&fep->attr, &attr, sizeof(FepAttribute));
+	      memcpy (&fep->attr, &attr, sizeof(FepSgrAttr));
 	      _fep_csi_free (csi);
 	    }
 	  p = sgr + sgr_len;
@@ -156,24 +160,74 @@ _fep_output_string_from_pty (Fep *fep, const char *str, int str_len)
 }
 
 static void
-_fep_output_status_text_string (Fep *fep, const char *str)
+_fep_output_string_with_attribute (Fep          *fep,
+                                   const char   *str,
+                                   FepAttribute *attr)
 {
-  if (*str != '\0')
+  char *local, *trunc, *p;
+  unsigned int start_index, end_index, length;
+  unsigned int index;
+  FepSgrAttr sgr_attr;
+
+  if (*str == '\0')
+    return;
+
+  if (fep->ptybuf.len > 0)
+    _fep_string_clear (&fep->ptybuf);
+
+  apply_attr (fep, &fep->attr_tty);
+
+  /* first truncate the string */
+  local = str_iconv (str, "UTF-8", nl_langinfo (CODESET));
+  trunc = _fep_strtrunc (str, fep->winsize.ws_col);
+  free (local);
+  if (trunc == NULL)
+    return;
+
+  length = _fep_charcount (trunc);
+  start_index = MIN(length, attr->start_index);
+  end_index = MIN(length, attr->end_index);
+
+  if (start_index > end_index)
     {
-      char *local, *mbs;
-
-      if (fep->ptybuf.len > 0)
-	_fep_string_clear (&fep->ptybuf);
-
-      apply_attr (fep, &fep->attr_tty);
-
-      local = str_iconv (str, "UTF-8", nl_langinfo (CODESET));
-      mbs = _fep_strtrunc (local, fep->winsize.ws_col);
-      free (local);
-      if (mbs)
-	write (fep->tty_out, mbs, strlen (mbs));
-      free (mbs);
+      index = start_index;
+      start_index = end_index;
+      end_index = index;
     }
+
+  if (attr->type != FEP_ATTR_NONE)
+    _fep_sgr_attr_from_attribute (attr, &sgr_attr);
+
+  if (start_index > 0 && attr->type != FEP_ATTR_NONE)
+    {
+      p = _fep_substring (trunc, 0, start_index);
+      if (p)
+	write (fep->tty_out, p, strlen (p));
+      free (p);
+    }
+
+  if (start_index < end_index)
+    {
+      if (attr->type != FEP_ATTR_NONE)
+	_fep_output_set_attributes (fep, &sgr_attr);
+
+      p = _fep_substring (trunc, start_index, end_index);
+      if (p)
+	write (fep->tty_out, p, strlen (p));
+      free (p);
+
+      if (attr->type != FEP_ATTR_NONE)
+	_fep_output_set_attributes (fep, &fep->attr_tty);
+    }
+
+  if (end_index < length)
+    {
+      p = _fep_substring (trunc, end_index, length);
+      if (p)
+	write (fep->tty_out, p, strlen (p));
+      free (p);
+    }
+  free (trunc);
 }
 
 static void
@@ -216,7 +270,9 @@ _fep_output_restore_cursor (Fep *fep)
 }
 
 void
-_fep_output_status_text (Fep *fep, const char *text)
+_fep_output_status_text (Fep          *fep,
+                         const char   *text,
+                         FepAttribute *attr)
 {
 
   if (fep->status_text != text)
@@ -224,17 +280,21 @@ _fep_output_status_text (Fep *fep, const char *text)
       free (fep->status_text);
       fep->status_text = strdup (text);
     }
+
+  memcpy (&fep->status_text_attr, attr, sizeof(FepAttribute));
   _fep_putp (fep, save_cursor);
 
   _fep_output_goto_status_text (fep, 0);
   _fep_putp (fep, clr_eol);
 
-  _fep_output_status_text_string (fep, fep->status_text);
+  _fep_output_string_with_attribute (fep, fep->status_text, attr);
   _fep_putp (fep, restore_cursor);
 }
 
 void
-_fep_output_cursor_text (Fep *fep, const char *text)
+_fep_output_cursor_text (Fep          *fep,
+                         const char   *text,
+                         FepAttribute *attr)
 {
   char *str;
 
@@ -258,23 +318,22 @@ _fep_output_cursor_text (Fep *fep, const char *text)
 
   if (*text != '\0')
     {
+      char *local;
+
       _fep_output_save_cursor (fep);
 
       if (_fep_output_get_cursor_position (fep, &fep->cursor))
 	_fep_output_cursor_address (fep, fep->cursor.row, fep->cursor.col);
 
-      if (fep->ptybuf.len > 0)
-	_fep_string_clear (&fep->ptybuf);
-
-      apply_attr (fep, &fep->attr_tty);
-
-      char *local = str_iconv (text, "UTF-8", nl_langinfo (CODESET));
+      /* keep cursor_text to erase the previous cursor_text at the next time */
+      local = str_iconv (text, "UTF-8", nl_langinfo (CODESET));
       fep->cursor_text = _fep_strtrunc (local,
 					fep->winsize.ws_col - fep->cursor.col);
       free (local);
 
-      if (fep->cursor_text)
-	write (fep->tty_out, fep->cursor_text, strlen (fep->cursor_text));
+      memcpy (&fep->cursor_text_attr, attr, sizeof(FepAttribute));
+      _fep_output_string_with_attribute (fep, fep->cursor_text, attr);
+
       _fep_output_restore_cursor (fep);
     }
 }
@@ -312,7 +371,7 @@ _fep_output_set_screen_size (Fep *fep, int col, int row)
 {
   _fep_output_save_cursor (fep);
   _fep_output_change_scroll_region (fep, 0, row - 1);
-  _fep_output_status_text (fep, fep->status_text);
+  _fep_output_status_text (fep, fep->status_text, &fep->status_text_attr);
   _fep_output_restore_cursor (fep);
 }
 
@@ -421,7 +480,7 @@ _fep_output_init_screen (Fep *fep)
     }
   _fep_putp (fep, cursor_normal);
 
-  _fep_output_status_text (fep, "");
+  _fep_output_status_text (fep, "", &fep->status_text_attr);
 }
 
 bool

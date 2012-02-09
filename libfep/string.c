@@ -177,7 +177,10 @@ _fep_strtrunc (const char *str, int width)
   wcs = calloc (strlen (str) + 1, sizeof(wchar_t));
   wcs_len = mbsrtowcs (wcs, &p, strlen (str), NULL);
   if (wcs_len == (size_t) -1)
-    return NULL;
+    {
+      free (wcs);
+      return NULL;
+    }
 
   for (i = 0, total = 0; i < wcs_len; i++)
     {
@@ -191,5 +194,61 @@ _fep_strtrunc (const char *str, int width)
   mbs = calloc (strlen (str) + 1, sizeof(char));
   wcsrtombs (mbs, &q, strlen (str), NULL);
   free (wcs);
+
+  return mbs;
+}
+
+int
+_fep_charcount (const char *str)
+{
+  wchar_t *wcs;
+  const char *p;
+  size_t retval;
+  
+  p = str;
+  retval = mbsrtowcs (NULL, &p, strlen (str), NULL);
+  if (retval == (size_t) -1)
+    return -1;
+  return (int) retval;
+}
+
+char *
+_fep_substring (const char *str, int from, int to)
+{
+  const char *p;
+  char *mbs;
+  const wchar_t *q;
+  wchar_t *wcs;
+  size_t wcs_len;
+  int index;
+
+  p = str;
+  wcs = calloc (strlen (str) + 1, sizeof(wchar_t));
+  wcs_len = mbsrtowcs (wcs, &p, strlen (str), NULL);
+  if (wcs_len == (size_t) -1)
+    {
+      free (wcs);
+      return NULL;
+    }
+
+  if (from > to)
+    {
+      index = from;
+      from = to;
+      to = index;
+    }
+
+  if (from > wcs_len || to > wcs_len)
+    {
+      free (wcs);
+      return NULL;
+    }
+
+  wcs[to] = L'\0';
+  q = &wcs[from];
+  mbs = calloc (strlen (str) + 1, sizeof(char));
+  wcsrtombs (mbs, &q, strlen (str), NULL);
+  free (wcs);
+
   return mbs;
 }

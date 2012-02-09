@@ -102,14 +102,18 @@ static void
 command_set_cursor_text (Fep *fep,
 			 FepControlMessage *request)
 {
-  _fep_output_cursor_text (fep, request->args[0].str);
+  FepAttribute attr;
+  if (_fep_control_message_read_attribute_arg (request, 1, &attr) == 0)
+    _fep_output_cursor_text (fep, request->args[0].str, &attr);
 }
 
 static void
 command_set_status_text (Fep *fep,
 			 FepControlMessage *request)
 {
-  _fep_output_status_text (fep, request->args[0].str);
+  FepAttribute attr;
+  if (_fep_control_message_read_attribute_arg (request, 1, &attr) == 0)
+    _fep_output_status_text (fep, request->args[0].str, &attr);
 }
 
 static void

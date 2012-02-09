@@ -34,8 +34,8 @@ struct _CommandEntry
 typedef struct _CommandEntry CommandEntry;
 CommandEntry commands[] =
   {
-    { FEP_CONTROL_SET_CURSOR_TEXT, 1 },
-    { FEP_CONTROL_SET_STATUS_TEXT, 1 },
+    { FEP_CONTROL_SET_CURSOR_TEXT, 2 },
+    { FEP_CONTROL_SET_STATUS_TEXT, 2 },
     { FEP_CONTROL_SEND_TEXT, 1 },
     { FEP_CONTROL_SEND_DATA, 1 },
     { FEP_CONTROL_KEY_EVENT, 2 },
@@ -338,7 +338,7 @@ _fep_control_message_read_int_arg (FepControlMessage *message,
   if (index > message->n_args)
     return -1;
 
-  if (message->args[index].len != 4)
+  if (message->args[index].len != sizeof(int32_t))
     return -1;
 
   intval = *(int32_t *) message->args[index].str;
@@ -361,8 +361,8 @@ _fep_control_message_write_int_arg (FepControlMessage *message,
   if (index > message->n_args)
     return -1;
 
-  message->args[index].str = calloc (4, sizeof(char));
-  message->args[index].cap = message->args[index].len = 4;
+  message->args[index].str = calloc (1, sizeof(int32_t));
+  message->args[index].cap = message->args[index].len = sizeof(int32_t);
 #ifdef WORDS_BIGENDIAN
   intval = bswap_32 (val);
 #else
@@ -402,6 +402,95 @@ _fep_control_message_write_string_arg (FepControlMessage *message,
   memcpy (message->args[index].str, str, length);
 
   return 0;
+}
+
+int
+_fep_control_message_read_attribute_arg (FepControlMessage *message,
+					 off_t index,
+					 FepAttribute *r_attr)
+{
+  char *p;
+  uint8_t intval;
+
+  if (index > message->n_args)
+    return -1;
+
+  if (message->args[index].len != 4 * sizeof(uint32_t))
+    return -1;
+
+  p = message->args[index].str;
+  intval = *(uint32_t *) p;
+  p += sizeof(uint32_t);
+#ifdef WORDS_BIGENDIAN
+  intval = bswap_32 (intval);
+#endif
+  r_attr->type = intval;
+
+  intval = *(uint32_t *) p;
+  p += sizeof(uint32_t);
+#ifdef WORDS_BIGENDIAN
+  intval = bswap_32 (intval);
+#endif
+  r_attr->value = intval;
+
+  intval = *(uint32_t *) p;
+  p += sizeof(uint32_t);
+#ifdef WORDS_BIGENDIAN
+  intval = bswap_32 (intval);
+#endif
+  r_attr->start_index = intval;
+
+  intval = *(uint32_t *) p;
+  p += sizeof(uint32_t);
+#ifdef WORDS_BIGENDIAN
+  intval = bswap_32 (intval);
+#endif
+  r_attr->end_index = intval;
+
+  return 0;
+}
+
+int
+_fep_control_message_write_attribute_arg (FepControlMessage *message,
+					 off_t index,
+					 const FepAttribute *attr)
+{
+  uint32_t intval;
+  char *p;
+
+  if (index > message->n_args)
+    return -1;
+
+  p = message->args[index].str = calloc (4, sizeof(uint32_t));
+  message->args[index].cap = message->args[index].len = 4 * sizeof(uint32_t);
+
+  intval = attr->type;
+#ifdef WORDS_BIGENDIAN
+  intval = bswap_32 (intval);
+#endif
+  memcpy (p, (char *) &intval, sizeof(uint32_t));
+  p += sizeof(uint32_t);
+
+  intval = attr->value;
+#ifdef WORDS_BIGENDIAN
+  intval = bswap_32 (intval);
+#endif
+  memcpy (p, (char *) &intval, sizeof(uint32_t));
+  p += sizeof(uint32_t);
+
+  intval = attr->start_index;
+#ifdef WORDS_BIGENDIAN
+  intval = bswap_32 (intval);
+#endif
+  memcpy (p, (char *) &intval, sizeof(uint32_t));
+  p += sizeof(uint32_t);
+
+  intval = attr->end_index;
+#ifdef WORDS_BIGENDIAN
+  intval = bswap_32 (intval);
+#endif
+  memcpy (p, (char *) &intval, sizeof(uint32_t));
+  p += sizeof(uint32_t);
 }
 
 static void

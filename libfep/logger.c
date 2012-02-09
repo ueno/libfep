@@ -31,7 +31,7 @@ fep_set_log_file (const char *file)
 {
   if (log_fp != NULL)
     fclose (log_fp);
-  log_fp = fopen (file, "a");
+  log_fp = fopen (file, "w");
 }
 
 void
@@ -39,7 +39,7 @@ fep_set_log_fd (int fd)
 {
   if (log_fp != NULL)
     fclose (log_fp);
-  log_fp = fdopen (fd, "a");
+  log_fp = fdopen (fd, "w");
 }
 
 int

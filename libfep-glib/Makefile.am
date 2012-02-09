@@ -16,16 +16,17 @@
 
 lib_LTLIBRARIES = libfep-glib.la
 
-libfep_glib_la_sources = fepgclient.c
+libfep_glib_la_sources = fepgenumtypes.c fepgattribute.c fepgclient.c
 libfep_glib_la_SOURCES = fepgmarshalers.c $(libfep_glib_la_sources)
 libfep_glib_la_CFLAGS = $(GIO_CFLAGS) -I$(top_srcdir)
 libfep_glib_la_LIBADD = $(GIO_LIBS) $(top_builddir)/libfep/libfep.la
 
 libfepglibincludedir = $(includedir)/libfep-glib
-libfepglibinclude_HEADERS = libfep-glib.h fepgclient.h
+libfepglib_public_headers = libfep-glib.h fepgattribute.h fepgclient.h
+libfepglibinclude_HEADERS = fepgenumtypes.h $(libfepglib_public_headers)
 noinst_HEADERS = fepgmarshalers.h
 
-# gen marshal
+# genmarshal
 fepgmarshalers.h: $(srcdir)/fepgmarshalers.list
 	$(AM_V_GEN) $(GLIB_GENMARSHAL) --prefix=_fep_g_marshal $(srcdir)/fepgmarshalers.list --header --internal > $@.tmp && \
 	mv $@.tmp $@
@@ -34,6 +35,17 @@ fepgmarshalers.c: $(srcdir)/fepgmarshalers.list fepgmarshalers.h
 	$(AM_V_GEN) (echo "#include \"fepgmarshalers.h\""; \
 	$(GLIB_GENMARSHAL) --prefix=_fep_g_marshal $(srcdir)/fepgmarshalers.list --body --internal) > $@.tmp && \
 	mv $@.tmp $@
+
+# mkenums
+fepgenumtypes.h: $(libfepglib_public_headers) fepgenumtypes.h.template
+	$(AM_V_GEN) $(GLIB_MKENUMS) --template fepgenumtypes.h.template \
+		$(libfepglib_public_headers) > fepgenumtypes.h.tmp && \
+		mv fepgenumtypes.h.tmp fepgenumtypes.h
+
+fepgenumtypes.c: $(libfepglib_public_headers) fepgenumtypes.c.template
+	$(AM_V_GEN) $(GLIB_MKENUMS) --template fepgenumtypes.c.template \
+		$(libfepglib_public_headers) > fepgenumtypes.c.tmp && \
+		mv fepgenumtypes.c.tmp fepgenumtypes.c
 
 DISTCLEANFILES = fepgmarshalers.h fepgmarshalers.c
 MAINTAINERCLEANFILES =
@@ -70,8 +82,8 @@ vapidir = $(datadir)/vala/vapi
 dist_vapi_DATA = libfep-glib.vapi libfep-glib.deps
 
 if ENABLE_VAPIGEN
-libfep-glib.vapi: Fep@FEP_LIBRARY_SUFFIX@.metadata | Fep@FEP_LIBRARY_SUFFIX@.gir
-	$(VAPIGEN) --pkg=gio-2.0 --library libfep-glib Fep-1.0.gir
+libfep-glib.vapi: Fep@FEP_LIBRARY_SUFFIX@.metadata Fep@FEP_LIBRARY_SUFFIX@-custom.vala | Fep@FEP_LIBRARY_SUFFIX@.gir
+	$(VAPIGEN) --pkg=gio-2.0 --library libfep-glib Fep-1.0.gir Fep-1.0-custom.vala
 endif
 
 MAINTAINERCLEANFILES += libfep-glib.vapi

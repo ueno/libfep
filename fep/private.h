@@ -35,19 +35,6 @@
 #include <libfep/private.h>
 
 typedef enum {
-  FEP_ATTR_TYPE_ENTER_UNDERLINE,
-  FEP_ATTR_TYPE_EXIT_UNDERLINE,
-  FEP_ATTR_TYPE_ENTER_STANDOUT,
-  FEP_ATTR_TYPE_EXIT_STANDOUT,
-  FEP_ATTR_TYPE_ENTER_BOLD,
-  FEP_ATTR_TYPE_ENTER_BLINK,
-  FEP_ATTR_TYPE_ORIG_PAIR,
-  FEP_ATTR_TYPE_ORIG_FORE,
-  FEP_ATTR_TYPE_ORIG_BACK,
-  FEP_ATTR_TYPE_LAST
-} FepAttrType;
-
-typedef enum {
   FEP_READ_KEY_OK,
   FEP_READ_KEY_ERROR,
   FEP_READ_KEY_NOT_ENOUGH
@@ -65,15 +52,35 @@ struct _FepPoint {
 };
 typedef struct _FepPoint FepPoint;
 
-struct _FepAttribute {
-  bool underline;
-  bool standout;
-  bool bold;
-  bool blink;
+typedef enum {
+  FEP_SGR_PARAM_ENTER_UNDERLINE,
+  FEP_SGR_PARAM_EXIT_UNDERLINE,
+  FEP_SGR_PARAM_ENTER_STANDOUT,
+  FEP_SGR_PARAM_EXIT_STANDOUT,
+  FEP_SGR_PARAM_ENTER_BOLD,
+  FEP_SGR_PARAM_ENTER_BLINK,
+  FEP_SGR_PARAM_ORIG_PAIR,
+  FEP_SGR_PARAM_ORIG_FORE,
+  FEP_SGR_PARAM_ORIG_BACK,
+  FEP_SGR_PARAM_LAST
+} FepSgrParamIndex;
+
+typedef enum
+  {
+    FEP_SGR_ATTR_UNDERLINE = 1,
+    FEP_SGR_ATTR_STANDOUT = 1 << 1,
+    FEP_SGR_ATTR_BOLD = 1 << 2,
+    FEP_SGR_ATTR_BLINK = 1 << 3,
+    FEP_SGR_ATTR_MASK = 0x0F
+  }
+  FepSgrAttrType;
+
+struct _FepSgrAttr {
+  FepSgrAttrType attr;
   int foreground;
   int background;
 };
-typedef struct _FepAttribute FepAttribute;
+typedef struct _FepSgrAttr FepSgrAttr;
 
 struct _Fep
 {
@@ -99,16 +106,19 @@ struct _Fep
 
   bool has_cpr;
 
-  FepAttribute attr;
-  FepAttribute attr_tty;
-  FepAttribute attr_pty;
-  int attr_codes[FEP_ATTR_TYPE_LAST];
+  /* support for SGR */
+  FepSgrAttr attr;
+  FepSgrAttr attr_tty;
+  FepSgrAttr attr_pty;
+  int sgr_codes[FEP_SGR_PARAM_LAST];
 
   char *cursor_text;
   FepPoint cursor;
   FepPoint cursor_save;
   FepPoint cursor_diff;
+  FepAttribute cursor_text_attr;
   char *status_text;
+  FepAttribute status_text_attr;
 
   struct winsize winsize;
   struct termios orig_termios;
@@ -122,8 +132,6 @@ struct _FepCSI
 };
 
 typedef struct _FepCSI FepCSI;
-
-extern const FepAttribute _fep_empty_attr;
 
 /* csi.c */
 bool             _fep_csi_scan             (const char         *str,
@@ -140,10 +148,13 @@ void             _fep_csi_free             (FepCSI             *csi);
 /* sgr.c */
 void             _fep_sgr_params_to_attr   (const char        **params,
                                             int                *attr_codes,
-                                            FepAttribute       *r_attr);
-char **          _fep_sgr_params_from_attr (const FepAttribute *attr,
+                                            FepSgrAttr         *r_attr);
+char **          _fep_sgr_params_from_attr (const FepSgrAttr   *attr,
                                             int                *attr_codes);
-void             _fep_sgr_get_attr_codes   (int                *attr_codes);
+void             _fep_get_sgr_codes        (int                *attr_codes);
+void             _fep_sgr_attr_from_attribute
+                                           (const FepAttribute *attr,
+					    FepSgrAttr         *r_sgr_attr);
 
 /* cap.c */
 const char *     _fep_cap_get_string       (const char         *name);
@@ -167,8 +178,9 @@ int              _fep_pselect              (Fep                *fep,
 /* output.c */
 void             _fep_putp                 (Fep                *fep,
                                             const char         *str);
-void             _fep_output_set_attributes (Fep                *fep,
-                                             const FepAttribute *attr);
+void             _fep_output_set_attributes
+                                           (Fep                *fep,
+					    const FepSgrAttr   *attr);
 void             _fep_output_change_scroll_region
                                            (Fep                *fep,
                                             int                 start,
@@ -182,9 +194,11 @@ void             _fep_output_string_from_pty
                                             const char         *str,
                                             int                 str_len);
 void             _fep_output_cursor_text   (Fep                *fep,
-                                            const char         *text);
+                                            const char         *text,
+					    FepAttribute       *attr);
 void             _fep_output_status_text   (Fep                *fep,
-                                            const char         *text);
+                                            const char         *text,
+					    FepAttribute       *attr);
 void             _fep_output_send_text     (Fep                *fep,
 					    const char         *text);
 ssize_t          _fep_output_send_data     (Fep                *fep,

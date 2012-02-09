@@ -135,12 +135,12 @@ main (int argc, char **argv)
 
   if (cursor_text)
     {
-      fep_client_set_cursor_text (client, cursor_text);
+      fep_client_set_cursor_text (client, cursor_text, NULL);
       exit (0);
     }
   else if (status_text)
     {
-      fep_client_set_status_text (client, status_text);
+      fep_client_set_status_text (client, status_text, NULL);
       exit (0);
     }
   else if (send_text)

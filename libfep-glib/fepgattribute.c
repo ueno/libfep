@@ -16,11 +16,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __LIBFEP_GOBJECT_FEP_GLIB_H__
-#define __LIBFEP_GOBJECT_FEP_GLIB_H__
-
-#include <libfep-glib/fepgenumtypes.h>
-#include <libfep-glib/fepgattribute.h>
-#include <libfep-glib/fepgclient.h>
-
+#ifdef HAVE_CONFIG_H
+#include <config.h>
 #endif
+
+#include <libfep-glib/libfep-glib.h>
+
+static FepGAttribute * fep_g_attribute_copy (const FepGAttribute *attr);
+static void            fep_g_attribute_free (FepGAttribute       *attr);
+
+G_DEFINE_BOXED_TYPE (FepGAttribute,
+		     fep_g_attribute,
+		     fep_g_attribute_copy,
+		     fep_g_attribute_free);
+
+static FepGAttribute *
+fep_g_attribute_copy (const FepGAttribute *attr)
+{
+  return g_slice_dup (FepGAttribute, attr);
+}
+
+static void
+fep_g_attribute_free (FepGAttribute *attr)
+{
+  g_slice_free (FepGAttribute, attr);
+}

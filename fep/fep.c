@@ -273,7 +273,7 @@ fep_run (Fep *fep, const char *command[])
       termios.c_cc[VTIME] = 3;
       tcsetattr (fep->tty_in, TCSANOW, &termios);
 
-      _fep_sgr_get_attr_codes (fep->attr_codes);
+      _fep_get_sgr_codes (fep->sgr_codes);
       _fep_output_init_screen (fep);
 
       if (_fep_output_get_cursor_position (fep, &fep->cursor))
@@ -432,6 +432,9 @@ main_loop (Fep *fep)
 	    break;
 	  buf[bytes_read] = '\0';
 
+	  fep_log (FEP_LOG_LEVEL_DEBUG,
+		   "pty read \"%s\"", buf);
+
 	  str1 = find_match_end (buf,
 				 bytes_read,
 				 clear_screen,
@@ -447,7 +450,9 @@ main_loop (Fep *fep)
 		str1 = str2;
 	      str1_len = bytes_read - (str1 - buf);
 	      _fep_output_string_from_pty (fep, buf, bytes_read - str1_len);
-	      _fep_output_status_text (fep, fep->status_text);
+	      _fep_output_status_text (fep,
+				       fep->status_text,
+				       &fep->status_text_attr);
 	      _fep_output_string_from_pty (fep, str1, str1_len);
 	    }
 	  else

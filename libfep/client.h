@@ -56,9 +56,11 @@ typedef int (*FepEventFilter) (FepEvent *event, void *data);
 FepClient *fep_client_open             (const char    *address);
 int        fep_client_get_poll_fd      (FepClient     *client);
 void       fep_client_set_cursor_text  (FepClient     *client,
-                                        const char    *text);
+                                        const char    *text,
+					FepAttribute  *attr);
 void       fep_client_set_status_text  (FepClient     *client,
-                                        const char    *text);
+                                        const char    *text,
+					FepAttribute  *attr);
 void       fep_client_send_text        (FepClient     *client,
                                         const char    *text);
 void       fep_client_send_data        (FepClient     *client,

@@ -69,6 +69,10 @@ void    _fep_strfreev      (char      **strv);
 int     _fep_strwidth      (const char *str);
 char *  _fep_strtrunc      (const char *str,
                             int         width);
+int     _fep_charcount     (const char *str);
+char *  _fep_substring     (const char *str,
+                            int         from,
+                            int         to);
 
 /* list.c */
 struct _FepList
@@ -103,31 +107,37 @@ struct _FepControlMessage
 };
 typedef struct _FepControlMessage FepControlMessage;
 
-int      _fep_read_control_message             (int                fd,
-                                                FepControlMessage *message);
-int      _fep_write_control_message            (int                fd,
-                                                FepControlMessage *message);
-int      _fep_transceive_control_message       (int                fd,
-                                                FepControlMessage *request,
-                                                FepControlMessage *response);
-FepList *_fep_append_control_message           (FepList           *head,
-                                                FepControlMessage *message);
-void     _fep_control_message_alloc_args       (FepControlMessage *message,
-                                                size_t             n_args);
-void     _fep_control_message_free_args        (FepControlMessage *message);
-void     _fep_control_message_free             (FepControlMessage *message);
-int      _fep_control_message_read_int_arg     (FepControlMessage *message,
-                                                off_t              index,
-                                                int32_t           *r_val);
-int      _fep_control_message_write_int_arg    (FepControlMessage *message,
-                                                off_t              index,
-                                                int32_t            val);
-int      _fep_control_message_write_byte_arg   (FepControlMessage *message,
-                                                off_t              index,
-                                                uint8_t            val);
-int      _fep_control_message_write_string_arg (FepControlMessage *message,
-                                                off_t              index,
-                                                const char        *str,
-                                                size_t             length);
+int      _fep_read_control_message               (int                 fd,
+                                                  FepControlMessage  *message);
+int      _fep_write_control_message              (int                 fd,
+                                                  FepControlMessage  *message);
+int      _fep_transceive_control_message         (int                 fd,
+                                                  FepControlMessage  *request,
+                                                  FepControlMessage  *response);
+FepList *_fep_append_control_message             (FepList            *head,
+                                                  FepControlMessage  *message);
+void     _fep_control_message_alloc_args         (FepControlMessage  *message,
+                                                  size_t              n_args);
+void     _fep_control_message_free_args          (FepControlMessage  *message);
+void     _fep_control_message_free               (FepControlMessage  *message);
+int      _fep_control_message_read_int_arg       (FepControlMessage  *message,
+                                                  off_t               index,
+                                                  int32_t            *r_val);
+int      _fep_control_message_write_int_arg      (FepControlMessage  *message,
+                                                  off_t               index,
+                                                  int32_t             val);
+int      _fep_control_message_write_byte_arg     (FepControlMessage  *message,
+                                                  off_t               index,
+                                                  uint8_t             val);
+int      _fep_control_message_write_string_arg   (FepControlMessage  *message,
+                                                  off_t               index,
+                                                  const char         *str,
+                                                  size_t              length);
+int      _fep_control_message_read_attribute_arg (FepControlMessage  *message,
+                                                  off_t               index,
+                                                  FepAttribute       *r_attr);
+int      _fep_control_message_write_attribute_arg (FepControlMessage  *message,
+                                                   off_t               index,
+                                                   const FepAttribute *attr);
 
 #endif	/* __LIBFEP_PRIVATE_H__ */

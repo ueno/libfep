@@ -40,14 +40,33 @@
 #include <stdlib.h>
 #include <errno.h>
 
-const FepAttribute _fep_empty_attr;
+static const FepSgrAttr _fep_empty_attr;
 
 void
-_fep_sgr_params_to_attr (const char **params, int *attr_codes,
-			 FepAttribute *r_attr)
+_fep_sgr_attr_from_attribute (const FepAttribute *attr, FepSgrAttr *r_sgr_attr)
+{
+  memset (r_sgr_attr, 0, sizeof(FepSgrAttr));
+  if (attr->type == FEP_ATTR_UNDERLINE
+      && attr->value != FEP_ATTR_UNDERLINE_NONE)
+    r_sgr_attr->attr |= FEP_SGR_ATTR_UNDERLINE;
+  if (attr->type == FEP_ATTR_STANDOUT
+      && attr->value != 0)
+    r_sgr_attr->attr |= FEP_SGR_ATTR_STANDOUT;
+  if (attr->type == FEP_ATTR_BOLD
+      && attr->value != 0)
+    r_sgr_attr->attr |= FEP_SGR_ATTR_BOLD;
+  if (attr->type == FEP_ATTR_BLINK
+      && attr->value != 0)
+    r_sgr_attr->attr |= FEP_SGR_ATTR_BLINK;
+  /* FIXME colors... */
+}
+
+void
+_fep_sgr_params_to_attr (const char **params, int *sgr_codes,
+			 FepSgrAttr *r_attr)
 {
   const char **p;
-  memset (r_attr, 0, sizeof(FepAttribute));
+  memset (r_attr, 0, sizeof(FepSgrAttr));
   for (p = params; *p; p++)
     {
       char *endptr;
@@ -58,29 +77,29 @@ _fep_sgr_params_to_attr (const char **params, int *attr_codes,
       assert (errno == 0 && *endptr == '\0');
 
       if (param == 0)
-	memcpy (r_attr, &_fep_empty_attr, sizeof(FepAttribute));
-      else if (param == attr_codes[FEP_ATTR_TYPE_ENTER_UNDERLINE])
-	r_attr->underline = true;
-      else if (param == attr_codes[FEP_ATTR_TYPE_EXIT_UNDERLINE])
-	r_attr->underline = false;
-      else if (param == attr_codes[FEP_ATTR_TYPE_ENTER_STANDOUT])
-	r_attr->standout = true;
-      else if (param == attr_codes[FEP_ATTR_TYPE_EXIT_STANDOUT])
-	r_attr->standout = false;
-      else if (param == attr_codes[FEP_ATTR_TYPE_ENTER_BOLD])
-	r_attr->bold = true;
-      else if (param == attr_codes[FEP_ATTR_TYPE_ENTER_BLINK])
-	r_attr->blink = true;
-      else if (param == attr_codes[FEP_ATTR_TYPE_ORIG_PAIR])
+	memcpy (r_attr, &_fep_empty_attr, sizeof(FepSgrAttr));
+      else if (param == sgr_codes[FEP_SGR_PARAM_ENTER_UNDERLINE])
+	r_attr->attr |= FEP_ATTR_UNDERLINE;
+      else if (param == sgr_codes[FEP_SGR_PARAM_EXIT_UNDERLINE])
+	r_attr->attr &= ~FEP_ATTR_UNDERLINE;
+      else if (param == sgr_codes[FEP_SGR_PARAM_ENTER_STANDOUT])
+	r_attr->attr |= FEP_ATTR_STANDOUT;
+      else if (param == sgr_codes[FEP_SGR_PARAM_EXIT_STANDOUT])
+	r_attr->attr &= ~FEP_ATTR_STANDOUT;
+      else if (param == sgr_codes[FEP_SGR_PARAM_ENTER_BOLD])
+	r_attr->attr |= FEP_ATTR_BOLD;
+      else if (param == sgr_codes[FEP_SGR_PARAM_ENTER_BLINK])
+	r_attr->attr |= FEP_ATTR_BLINK;
+      else if (param == sgr_codes[FEP_SGR_PARAM_ORIG_PAIR])
 	r_attr->foreground = r_attr->background = 0;
-      else if (param == attr_codes[FEP_ATTR_TYPE_ORIG_FORE])
+      else if (param == sgr_codes[FEP_SGR_PARAM_ORIG_FORE])
 	r_attr->foreground = 0;
-      else if (param == attr_codes[FEP_ATTR_TYPE_ORIG_BACK])
+      else if (param == sgr_codes[FEP_SGR_PARAM_ORIG_BACK])
 	r_attr->background = 0;
       else if (param == 22)	/* normal color or intensity */
-	r_attr->bold = false;
+	r_attr->attr &= ~FEP_ATTR_BOLD;
       else if (param == 25)	/* blink: off */
-	r_attr->blink = false;
+	r_attr->attr &= ~FEP_ATTR_BLINK;
       else if (/* set foreground color */
 	       (30 <= param && param <= 37)
 	       /* set foreground color, high intensity */
@@ -95,43 +114,43 @@ _fep_sgr_params_to_attr (const char **params, int *attr_codes,
 }
 
 char **
-_fep_sgr_params_from_attr (const FepAttribute *attr,
-			   int *attr_codes)
+_fep_sgr_params_from_attr (const FepSgrAttr *attr,
+			   int *sgr_codes)
 {
 #define MAX_PARAM_DIGITS 3
   char **params = calloc (7, sizeof(char *)), **p = params;
-  if (memcmp (attr, &_fep_empty_attr, sizeof(FepAttribute)) != 0)
+  if (memcmp (attr, &_fep_empty_attr, sizeof(FepSgrAttr)) != 0)
     {
-      if (attr->underline
-	  && attr_codes[FEP_ATTR_TYPE_ENTER_UNDERLINE] != 0)
+      if ((attr->attr & FEP_SGR_ATTR_UNDERLINE)
+	  && sgr_codes[FEP_SGR_PARAM_ENTER_UNDERLINE] != 0)
 	{
 	  *p = malloc ((MAX_PARAM_DIGITS + 1)  * sizeof (char *));
 	  snprintf (*p, MAX_PARAM_DIGITS,
-		    "%d", attr_codes[FEP_ATTR_TYPE_ENTER_UNDERLINE]);
+		    "%d", sgr_codes[FEP_SGR_PARAM_ENTER_UNDERLINE]);
 	  p++;
 	}
-      if (attr->standout
-	  && attr_codes[FEP_ATTR_TYPE_ENTER_STANDOUT] != 0)
+      if ((attr->attr & FEP_SGR_ATTR_STANDOUT)
+	  && sgr_codes[FEP_SGR_PARAM_ENTER_STANDOUT] != 0)
 	{
 	  *p = malloc ((MAX_PARAM_DIGITS + 1)  * sizeof (char *));
 	  snprintf (*p, MAX_PARAM_DIGITS,
-		    "%d", attr_codes[FEP_ATTR_TYPE_ENTER_STANDOUT]);
+		    "%d", sgr_codes[FEP_SGR_PARAM_ENTER_STANDOUT]);
 	  p++;
 	}
-      if (attr->bold
-	  && attr_codes[FEP_ATTR_TYPE_ENTER_BOLD] != 0)
+      if ((attr->attr & FEP_SGR_ATTR_BOLD)
+	  && sgr_codes[FEP_SGR_PARAM_ENTER_BOLD] != 0)
 	{
 	  *p = malloc ((MAX_PARAM_DIGITS + 1)  * sizeof (char *));
 	  snprintf (*p, MAX_PARAM_DIGITS,
-		    "%d", attr_codes[FEP_ATTR_TYPE_ENTER_BOLD]);
+		    "%d", sgr_codes[FEP_SGR_PARAM_ENTER_BOLD]);
 	  p++;
 	}
-      if (attr->blink
-	  && attr_codes[FEP_ATTR_TYPE_ENTER_BLINK] != 0)
+      if ((attr->attr & FEP_SGR_ATTR_BLINK)
+	  && sgr_codes[FEP_SGR_PARAM_ENTER_BLINK] != 0)
 	{
 	  *p = malloc ((MAX_PARAM_DIGITS + 1)  * sizeof (char *));
 	  snprintf (*p, MAX_PARAM_DIGITS,
-		    "%d", attr_codes[FEP_ATTR_TYPE_ENTER_BLINK]);
+		    "%d", sgr_codes[FEP_SGR_PARAM_ENTER_BLINK]);
 	  p++;
 	}
       if (attr->foreground != 0)
@@ -153,25 +172,25 @@ _fep_sgr_params_from_attr (const FepAttribute *attr,
 }
 
 void
-_fep_sgr_get_attr_codes (int *attr_codes)
+_fep_get_sgr_codes (int *sgr_codes)
 {
   static const struct
   {
     char *name;
     int n_args;
     int index;
-    FepAttrType code;
+    FepSgrParamIndex code;
   } name_code[] =
       {
-	{ "enter_underline_mode", 1, 0, FEP_ATTR_TYPE_ENTER_UNDERLINE },
-	{ "exit_underline_mode", 1, 0, FEP_ATTR_TYPE_EXIT_UNDERLINE },
-	{ "enter_standout_mode", 1, 0, FEP_ATTR_TYPE_ENTER_STANDOUT },
-	{ "exit_standout_mode", 1, 0, FEP_ATTR_TYPE_EXIT_STANDOUT },
-	{ "enter_bold_mode", 1, 0, FEP_ATTR_TYPE_ENTER_BOLD },
-	{ "enter_blink_mode", 1, 0, FEP_ATTR_TYPE_ENTER_BLINK },
-	{ "orig_pair", 1, 0, FEP_ATTR_TYPE_ORIG_PAIR },
-	{ "orig_pair", 2, 0, FEP_ATTR_TYPE_ORIG_FORE },
-	{ "orig_pair", 2, 1, FEP_ATTR_TYPE_ORIG_BACK }
+	{ "enter_underline_mode", 1, 0, FEP_SGR_PARAM_ENTER_UNDERLINE },
+	{ "exit_underline_mode", 1, 0, FEP_SGR_PARAM_EXIT_UNDERLINE },
+	{ "enter_standout_mode", 1, 0, FEP_SGR_PARAM_ENTER_STANDOUT },
+	{ "exit_standout_mode", 1, 0, FEP_SGR_PARAM_EXIT_STANDOUT },
+	{ "enter_bold_mode", 1, 0, FEP_SGR_PARAM_ENTER_BOLD },
+	{ "enter_blink_mode", 1, 0, FEP_SGR_PARAM_ENTER_BLINK },
+	{ "orig_pair", 1, 0, FEP_SGR_PARAM_ORIG_PAIR },
+	{ "orig_pair", 2, 0, FEP_SGR_PARAM_ORIG_FORE },
+	{ "orig_pair", 2, 1, FEP_SGR_PARAM_ORIG_BACK }
       };
   int i;
 
@@ -193,11 +212,21 @@ _fep_sgr_get_attr_codes (int *attr_codes)
 		{
 		  errno = 0;
 		  code = strtoul (_params[name_code[i].index], &endptr, 10);
-		  if (errno == 0 && endptr == '\0')
-		    attr_codes[name_code[i].code] = code;
+		  if (errno == 0 && *endptr == '\0')
+		    {
+		      sgr_codes[name_code[i].code] = code;
+		      fep_log (FEP_LOG_LEVEL_DEBUG,
+			       "SGR code %s[%d] = %d",
+			       name_code[i].name, name_code[i].index, code);
+		    }
 		}
 	      else
-		attr_codes[name_code[i].code] = -1;
+		{
+		  sgr_codes[name_code[i].code] = -1;
+		  fep_log (FEP_LOG_LEVEL_DEBUG,
+			   "SGR code %s = -1",
+			   name_code[i].name);
+		}
 	      _fep_strfreev (_params);
 	    }
 	  _fep_csi_free (csi);

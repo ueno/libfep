@@ -39,6 +39,12 @@ struct _FepClient
   FepList *messages;
 };
 
+static const FepAttribute empty_attr =
+  {
+    .type = FEP_ATTR_NONE,
+    .value = 0,
+  };
+
 /**
  * fep_client_open:
  * @address: (allow-none): socket address of the FEP server
@@ -93,17 +99,21 @@ fep_client_open (const char *address)
  * fep_client_set_cursor_text:
  * @client: a #FepClient
  * @text: a cursor text
+ * @attr: a #FepAttribute
  *
  * Request to display @text at the cursor position on the terminal.
  */
 void
-fep_client_set_cursor_text (FepClient *client, const char *text)
+fep_client_set_cursor_text (FepClient    *client,
+                            const char   *text,
+                            FepAttribute *attr)
 {
   FepControlMessage message;
 
   message.command = FEP_CONTROL_SET_CURSOR_TEXT;
-  _fep_control_message_alloc_args (&message, 1);
+  _fep_control_message_alloc_args (&message, 2);
   _fep_control_message_write_string_arg (&message, 0, text, strlen (text) + 1);
+  _fep_control_message_write_attribute_arg (&message, 1, attr ? attr : &empty_attr);
 
   if (client->filter_running)
     client->messages = _fep_append_control_message (client->messages, &message);
@@ -116,17 +126,21 @@ fep_client_set_cursor_text (FepClient *client, const char *text)
  * fep_client_set_status_text:
  * @client: a #FepClient
  * @text: a status text
+ * @attr: a #FepAttribute
  *
  * Request to display @text at the bottom of the terminal.
  */
 void
-fep_client_set_status_text (FepClient *client, const char *text)
+fep_client_set_status_text (FepClient    *client,
+                            const char   *text,
+                            FepAttribute *attr)
 {
   FepControlMessage message;
 
   message.command = FEP_CONTROL_SET_STATUS_TEXT;
-  _fep_control_message_alloc_args (&message, 1);
+  _fep_control_message_alloc_args (&message, 2);
   _fep_control_message_write_string_arg (&message, 0, text, strlen (text) + 1);
+  _fep_control_message_write_attribute_arg (&message, 1, attr ? attr : &empty_attr);
 
   if (client->filter_running)
     client->messages = _fep_append_control_message (client->messages, &message);
