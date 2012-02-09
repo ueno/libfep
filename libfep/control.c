@@ -491,6 +491,8 @@ _fep_control_message_write_attribute_arg (FepControlMessage *message,
 #endif
   memcpy (p, (char *) &intval, sizeof(uint32_t));
   p += sizeof(uint32_t);
+
+  return 0;
 }
 
 static void

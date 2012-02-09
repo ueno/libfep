@@ -121,7 +121,8 @@ _fep_output_string_from_pty (Fep *fep, const char *str, int str_len)
 {
   if (str_len > 0)
     {
-      char *p, *sgr;
+      const char *p;
+      char *sgr;
       size_t sgr_len;
 
       apply_attr (fep, &fep->attr_pty);
@@ -131,7 +132,6 @@ _fep_output_string_from_pty (Fep *fep, const char *str, int str_len)
       while (_fep_csi_scan (p, str_len, 'm', &sgr, &sgr_len))
 	{
 	  FepCSI *csi;
-	  char *endptr;
 	  csi = _fep_csi_parse (sgr, sgr_len, NULL);
 	  if (csi)
 	    {
@@ -162,6 +162,7 @@ _fep_output_string_from_pty (Fep *fep, const char *str, int str_len)
 static void
 _fep_output_string_with_attribute (Fep          *fep,
                                    const char   *str,
+				   size_t width,
                                    FepAttribute *attr)
 {
   char *local, *trunc, *p;
@@ -179,7 +180,7 @@ _fep_output_string_with_attribute (Fep          *fep,
 
   /* first truncate the string */
   local = str_iconv (str, "UTF-8", nl_langinfo (CODESET));
-  trunc = _fep_strtrunc (str, fep->winsize.ws_col);
+  trunc = _fep_strtrunc (local, width);
   free (local);
   if (trunc == NULL)
     return;
@@ -274,8 +275,7 @@ _fep_output_status_text (Fep          *fep,
                          const char   *text,
                          FepAttribute *attr)
 {
-
-  if (fep->status_text != text)
+  if (strcmp (fep->status_text, text) != 0)
     {
       free (fep->status_text);
       fep->status_text = strdup (text);
@@ -287,7 +287,10 @@ _fep_output_status_text (Fep          *fep,
   _fep_output_goto_status_text (fep, 0);
   _fep_putp (fep, clr_eol);
 
-  _fep_output_string_with_attribute (fep, fep->status_text, attr);
+  _fep_output_string_with_attribute (fep,
+				     fep->status_text,
+				     fep->winsize.ws_col, attr);
+
   _fep_putp (fep, restore_cursor);
 }
 
@@ -296,43 +299,56 @@ _fep_output_cursor_text (Fep          *fep,
                          const char   *text,
                          FepAttribute *attr)
 {
-  char *str;
-
   if (fep->cursor_text && *fep->cursor_text != '\0')
     {
-      int width = _fep_strwidth (fep->cursor_text);
+      char *local, *spaces;
+      int width;
+
+      local = str_iconv (fep->cursor_text,
+			 "UTF-8",
+			 nl_langinfo (CODESET));
+      width = _fep_strwidth (local);
+      free (local);
 
       _fep_output_save_cursor (fep);
       if (fep->has_cpr)
-	_fep_output_cursor_address (fep, fep->cursor.row, fep->cursor.col);
+	_fep_output_cursor_address (fep,
+				    fep->cursor.row,
+				    fep->cursor.col);
 
-      str = malloc (width * sizeof(char));
-      memset (str, ' ', width * sizeof(char));
-      write (fep->tty_out, str, width * sizeof(char));
-      free  (str);
+      width = MIN (width, fep->winsize.ws_col - fep->cursor.col);
+      spaces = malloc (width * sizeof(char));
+      memset (spaces, ' ', width * sizeof(char));
+      write (fep->tty_out, spaces, width * sizeof(char));
+      free  (spaces);
 
       free (fep->cursor_text);
       fep->cursor_text = NULL;
+
       _fep_output_restore_cursor (fep);
     }
 
   if (*text != '\0')
     {
-      char *local;
+      if (fep->cursor_text == NULL
+	  || strcmp (fep->cursor_text, text) != 0)
+	{
+	  free (fep->cursor_text);
+	  fep->cursor_text = strdup (text);
+	}
 
       _fep_output_save_cursor (fep);
 
       if (_fep_output_get_cursor_position (fep, &fep->cursor))
-	_fep_output_cursor_address (fep, fep->cursor.row, fep->cursor.col);
-
-      /* keep cursor_text to erase the previous cursor_text at the next time */
-      local = str_iconv (text, "UTF-8", nl_langinfo (CODESET));
-      fep->cursor_text = _fep_strtrunc (local,
-					fep->winsize.ws_col - fep->cursor.col);
-      free (local);
+	_fep_output_cursor_address (fep,
+				    fep->cursor.row,
+				    fep->cursor.col);
 
       memcpy (&fep->cursor_text_attr, attr, sizeof(FepAttribute));
-      _fep_output_string_with_attribute (fep, fep->cursor_text, attr);
+      _fep_output_string_with_attribute (fep,
+					 fep->cursor_text,
+					 fep->winsize.ws_col - fep->cursor.col,
+					 attr);
 
       _fep_output_restore_cursor (fep);
     }
@@ -399,8 +415,7 @@ _fep_output_dsr_cpr (Fep *fep, FepPoint *point)
 	  return false;
 	}
       _fep_string_append (&csibuf, buf, bytes_read);
-      if (_fep_csi_scan (csibuf.str, csibuf.len, 'R',
-			 (const char **) &csi, &csi_len))
+      if (_fep_csi_scan (csibuf.str, csibuf.len, 'R', &csi, &csi_len))
 	{
 	  const char *csi_end;
 	  char **strv, *endptr;

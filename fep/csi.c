@@ -22,10 +22,14 @@
 
 /* http://vt100.net/docs/vt102-ug/appendixd.html */
 bool
-_fep_csi_scan (const char *str, size_t len, const char final,
-	       const char **r_csi, size_t *r_csi_len)
+_fep_csi_scan (const char *str,
+               size_t      len,
+               const char  final,
+               char      **r_csi,
+               size_t     *r_csi_len)
 {
-  const char *p, *start;
+  const char *p;
+  char *start;
 
   for (p = str; p - str < len; )
     {

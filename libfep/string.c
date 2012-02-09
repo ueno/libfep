@@ -201,7 +201,6 @@ _fep_strtrunc (const char *str, int width)
 int
 _fep_charcount (const char *str)
 {
-  wchar_t *wcs;
   const char *p;
   size_t retval;
   

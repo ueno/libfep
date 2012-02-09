@@ -307,7 +307,9 @@ fep_g_client_set_cursor_text (FepGClient    *client,
                               FepGAttribute *attr)
 {
   FepGClientPrivate *priv = FEP_G_CLIENT_GET_PRIVATE (client);
-  fep_client_set_cursor_text (priv->client, text, attr);
+  fep_client_set_cursor_text (priv->client,
+			      text,
+			      (FepAttribute *) attr);
 }
 
 /**
@@ -324,7 +326,9 @@ fep_g_client_set_status_text (FepGClient    *client,
                               FepGAttribute *attr)
 {
   FepGClientPrivate *priv = FEP_G_CLIENT_GET_PRIVATE (client);
-  fep_client_set_status_text (priv->client, text, attr);
+  fep_client_set_status_text (priv->client,
+			      text,
+			      (FepAttribute *) attr);
 }
 
 /**

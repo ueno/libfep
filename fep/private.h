@@ -137,7 +137,7 @@ typedef struct _FepCSI FepCSI;
 bool             _fep_csi_scan             (const char         *str,
                                             size_t              len,
                                             const char          final,
-                                            const char        **r_csi,
+                                            char              **r_csi,
                                             size_t             *r_csi_len);
 FepCSI          *_fep_csi_parse            (const char         *str,
                                             size_t              len,
