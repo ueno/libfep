@@ -50,7 +50,11 @@ fepgenumtypes.c: $(libfepglib_public_headers) fepgenumtypes.c.template
 DISTCLEANFILES = fepgmarshalers.h fepgmarshalers.c
 MAINTAINERCLEANFILES =
 CLEANFILES =
-EXTRA_DIST = fepgmarshalers.list
+EXTRA_DIST =					\
+	fepgmarshalers.list			\
+	fepgenumtypes.h.template		\
+	fepgenumtypes.c.template		\
+	$(NULL)
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libfep-glib.pc
@@ -87,6 +91,9 @@ libfep-glib.vapi: Fep@FEP_LIBRARY_SUFFIX@.metadata Fep@FEP_LIBRARY_SUFFIX@-custo
 endif
 
 MAINTAINERCLEANFILES += libfep-glib.vapi
-EXTRA_DIST += Fep@FEP_LIBRARY_SUFFIX@.metadata
+EXTRA_DIST +=					\
+	Fep@FEP_LIBRARY_SUFFIX@.metadata	\
+	Fep@FEP_LIBRARY_SUFFIX@-custom.vala	\
+	$(NULL)
 
 -include $(top_srcdir)/git.mk
