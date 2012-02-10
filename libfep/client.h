@@ -19,21 +19,35 @@
 #ifndef __LIBFEP_CLIENT_H__
 #define __LIBFEP_CLIENT_H__
 
-enum _FepEventType
+/**
+ * FepEventType:
+ * @FEP_NOTHING: Nothing happend; used to indicate error
+ * @FEP_KEY_PRESS: Key is pressed
+ * @FEP_RESIZED: Window is resized
+ */
+typedef enum _FepEventType
   {
     FEP_NOTHING = -1,
     FEP_KEY_PRESS = 0,
     FEP_RESIZED = 1
-  };
+  } FepEventType;
 
-typedef enum _FepEventType FepEventType;
-
+/**
+ * FepEvent:
+ * @type: type of the event
+ */
 struct _FepEvent
 {
   FepEventType type;
 };
 typedef struct _FepEvent FepEvent;
 
+/**
+ * FepEventKey:
+ * @event: base event struct
+ * @keyval: keysym value
+ * @modifiers: modifier mask
+ */
 struct _FepEventKey
 {
   FepEvent event;
@@ -42,6 +56,12 @@ struct _FepEventKey
 };
 typedef struct _FepEventKey FepEventKey;
 
+/**
+ * FepEventResize:
+ * @event: base event struct
+ * @cols: number of columns
+ * @rows: number of rows
+ */
 struct _FepEventResize
 {
   FepEvent event;
@@ -65,7 +85,7 @@ void       fep_client_send_text        (FepClient     *client,
                                         const char    *text);
 void       fep_client_send_data        (FepClient     *client,
                                         const char    *data,
-                                        size_t         data_len);
+                                        size_t         length);
 void       fep_client_set_event_filter (FepClient     *client,
                                         FepEventFilter filter,
                                         void          *data);

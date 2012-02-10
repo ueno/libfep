@@ -22,6 +22,11 @@
 
 #include <libfep-glib/libfep-glib.h>
 
+/**
+ * SECTION:fepgattribute
+ * @short_description: Attribute to decorate text
+ */
+
 static FepGAttribute * fep_g_attribute_copy (const FepGAttribute *attr);
 static void            fep_g_attribute_free (FepGAttribute       *attr);
 

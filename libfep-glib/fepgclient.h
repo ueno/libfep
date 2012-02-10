@@ -41,6 +41,11 @@ struct _FepGClient {
   FepGClientPrivate *priv;
 };
 
+/**
+ * FepGClientClass:
+ * @filter_key_event: class handler for #FepGClient::filter-key-event
+ * @resized: class handler for #FepGClient::resized
+ */
 struct _FepGClientClass {
   /*< private >*/
   GObjectClass parent_class;

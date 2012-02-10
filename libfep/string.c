@@ -179,6 +179,8 @@ _fep_strtrunc (const char *str, int width)
   if (wcs_len == (size_t) -1)
     {
       free (wcs);
+      fep_log (FEP_LOG_LEVEL_WARNING,
+	       "can't convert string to wchar string");
       return NULL;
     }
 
@@ -207,7 +209,11 @@ _fep_charcount (const char *str)
   p = str;
   retval = mbsrtowcs (NULL, &p, strlen (str), NULL);
   if (retval == (size_t) -1)
-    return -1;
+    {
+      fep_log (FEP_LOG_LEVEL_WARNING,
+	       "can't convert string to wchar string");
+      return -1;
+    }
   return (int) retval;
 }
 
@@ -227,6 +233,8 @@ _fep_substring (const char *str, int from, int to)
   if (wcs_len == (size_t) -1)
     {
       free (wcs);
+      fep_log (FEP_LOG_LEVEL_WARNING,
+	       "can't convert string to wchar string");
       return NULL;
     }
 
@@ -240,6 +248,8 @@ _fep_substring (const char *str, int from, int to)
   if (from > wcs_len || to > wcs_len)
     {
       free (wcs);
+      fep_log (FEP_LOG_LEVEL_WARNING,
+	       "invalid range");
       return NULL;
     }
 

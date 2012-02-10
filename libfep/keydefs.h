@@ -24,8 +24,30 @@
  * @short_description: Constant definitions for keyval/modifiers
  */
 
+/**
+ * FepModifierType:
+ * @FEP_SHIFT_MASK: the Shift key.
+ * @FEP_LOCK_MASK: a Lock key (depending on the modifier mapping of the
+ *  X server this may either be CapsLock or ShiftLock).
+ * @FEP_CONTROL_MASK: the Control key.
+ * @FEP_MOD1_MASK: the fourth modifier key (it depends on the modifier
+ *  mapping of the X server which key is interpreted as this modifier, but
+ *  normally it is the Alt key).
+ * @FEP_MOD2_MASK: the fifth modifier key (it depends on the modifier
+ *  mapping of the X server which key is interpreted as this modifier).
+ * @FEP_MOD3_MASK: the sixth modifier key (it depends on the modifier
+ *  mapping of the X server which key is interpreted as this modifier).
+ * @FEP_MOD4_MASK: the seventh modifier key (it depends on the modifier
+ *  mapping of the X server which key is interpreted as this modifier).
+ * @FEP_MOD5_MASK: the eighth modifier key (it depends on the modifier
+ *  mapping of the X server which key is interpreted as this modifier).
+ * @FEP_SUPER_MASK: the Super modifier. Since 2.10
+ * @FEP_HYPER_MASK: the Hyper modifier. Since 2.10
+ * @FEP_META_MASK: the Meta modifier. Since 2.10
+ * @FEP_RELEASE_MASK: not used in FEP itself. GTK+ uses it to differentiate
+ *  between (keyval, modifiers) pairs from key press and release events.
+ */
 typedef enum  {
-  FEP_NONE = 0,
   FEP_SHIFT_MASK = 1 << 0,
   FEP_LOCK_MASK = 1 << 1,
   FEP_CONTROL_MASK = 1 << 2,
@@ -34,9 +56,6 @@ typedef enum  {
   FEP_MOD3_MASK = 1 << 5,
   FEP_MOD4_MASK = 1 << 6,
   FEP_MOD5_MASK = 1 << 7,
-  FEP_LSHIFT_MASK = 1 << 22,
-  FEP_RSHIFT_MASK = 1 << 23,
-  FEP_USLEEP_MASK = 1 << 24,
   FEP_SUPER_MASK = 1 << 26,
   FEP_HYPER_MASK = 1 << 27,
   FEP_META_MASK = 1 << 28,

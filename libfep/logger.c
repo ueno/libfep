@@ -23,6 +23,11 @@
 #include <sys/time.h>
 #include <assert.h>
 
+/**
+ * SECTION:logger
+ * @short_description: Logging facility
+ */
+
 static FILE *log_fp;
 static FepLogLevel log_level = FEP_LOG_LEVEL_WARNING;
 

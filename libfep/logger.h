@@ -19,6 +19,15 @@
 #ifndef __LIBFEP_LOGGER_H__
 #define __LIBFEP_LOGGER_H__
 
+/**
+ * FepLogLevel:
+ * @FEP_LOG_LEVEL_ERROR: Indicate the log message as error
+ * @FEP_LOG_LEVEL_CRITICAL: Critical failure messages
+ * @FEP_LOG_LEVEL_WARNING: Warning messages
+ * @FEP_LOG_LEVEL_MESSAGE: Normal messages
+ * @FEP_LOG_LEVEL_INFO: Informational messages
+ * @FEP_LOG_LEVEL_DEBUG: Debugging messages
+ */
 typedef enum
   {
     FEP_LOG_LEVEL_ERROR = 0,

@@ -41,7 +41,7 @@ struct _FepClient
 
 static const FepAttribute empty_attr =
   {
-    .type = FEP_ATTR_NONE,
+    .type = FEP_ATTR_TYPE_NONE,
     .value = 0,
   };
 

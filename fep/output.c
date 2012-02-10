@@ -196,10 +196,10 @@ _fep_output_string_with_attribute (Fep          *fep,
       end_index = index;
     }
 
-  if (attr->type != FEP_ATTR_NONE)
+  if (attr->type != FEP_ATTR_TYPE_NONE)
     _fep_sgr_attr_from_attribute (attr, &sgr_attr);
 
-  if (start_index > 0 && attr->type != FEP_ATTR_NONE)
+  if (start_index > 0 && attr->type != FEP_ATTR_TYPE_NONE)
     {
       p = _fep_substring (trunc, 0, start_index);
       if (p)
@@ -209,7 +209,7 @@ _fep_output_string_with_attribute (Fep          *fep,
 
   if (start_index < end_index)
     {
-      if (attr->type != FEP_ATTR_NONE)
+      if (attr->type != FEP_ATTR_TYPE_NONE)
 	_fep_output_set_attributes (fep, &sgr_attr);
 
       p = _fep_substring (trunc, start_index, end_index);
@@ -217,7 +217,7 @@ _fep_output_string_with_attribute (Fep          *fep,
 	write (fep->tty_out, p, strlen (p));
       free (p);
 
-      if (attr->type != FEP_ATTR_NONE)
+      if (attr->type != FEP_ATTR_TYPE_NONE)
 	_fep_output_set_attributes (fep, &fep->attr_tty);
     }
 

@@ -19,25 +19,46 @@
 #ifndef __LIBFEP_ATTRIBUTE_H__
 #define __LIBFEP_ATTRIBUTE_H__
 
-enum _FepAttrType
+/**
+ * SECTION:attribute
+ * @short_description: Attribute to decorate text
+ */
+
+/**
+ * FepAttrType:
+ * @FEP_ATTR_TYPE_UNDERLINE: Decorate with underline
+ * @FEP_ATTR_TYPE_FOREGROUND: Foreground color
+ * @FEP_ATTR_TYPE_BACKGROUND: Background color
+ * @FEP_ATTR_TYPE_NONE: No attribute
+ * @FEP_ATTR_TYPE_STANDOUT: Reverse video
+ * @FEP_ATTR_TYPE_BOLD: Bold
+ * @FEP_ATTR_TYPE_BLINK: Blink
+ */
+typedef enum
   {
     /* compatible with IBusAttrType */
-    FEP_ATTR_UNDERLINE = 0,
-    FEP_ATTR_FOREGROUND = 1,
-    FEP_ATTR_BACKGROUND = 2,
+    FEP_ATTR_TYPE_UNDERLINE = 0,
+    FEP_ATTR_TYPE_FOREGROUND = 1,
+    FEP_ATTR_TYPE_BACKGROUND = 2,
 
     /* libfep specific */
-    FEP_ATTR_NONE = 3,
-    FEP_ATTR_STANDOUT = 4,
-    FEP_ATTR_BOLD = 5,
-    FEP_ATTR_BLINK = 6
-  };
+    FEP_ATTR_TYPE_NONE = 3,
+    FEP_ATTR_TYPE_STANDOUT = 4,
+    FEP_ATTR_TYPE_BOLD = 5,
+    FEP_ATTR_TYPE_BLINK = 6
+  } FepAttrType;
 
-typedef enum _FepAttrType FepAttrType;
-
-/* compatible with IBusAttrUnderline */
+/**
+ * FepAttrUnderline:
+ * @FEP_ATTR_UNDERLINE_NONE: No underline
+ * @FEP_ATTR_UNDERLINE_SINGLE: Single underline
+ * @FEP_ATTR_UNDERLINE_DOUBLE: Double underline
+ * @FEP_ATTR_UNDERLINE_LOW: Low underline? FIXME
+ * @FEP_ATTR_UNDERLINE_ERROR: Error underline
+ */
 enum _FepAttrUnderline
   {
+    /* compatible with IBusAttrUnderline */
     FEP_ATTR_UNDERLINE_NONE = 0,
     FEP_ATTR_UNDERLINE_SINGLE = 1,
     FEP_ATTR_UNDERLINE_DOUBLE = 2,
@@ -47,6 +68,13 @@ enum _FepAttrUnderline
 
 typedef enum _FepAttrUnderline FepAttrUnderline;
 
+/**
+ * FepAttribute:
+ * @type: type of the attribute
+ * @value: value of the attribute
+ * @start_index: starting position of the attribute
+ * @end_index: end position (exclusive) of the attribute
+ */
 struct _FepAttribute
 {
   FepAttrType type;

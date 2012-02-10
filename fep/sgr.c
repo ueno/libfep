@@ -46,16 +46,16 @@ void
 _fep_sgr_attr_from_attribute (const FepAttribute *attr, FepSgrAttr *r_sgr_attr)
 {
   memset (r_sgr_attr, 0, sizeof(FepSgrAttr));
-  if (attr->type == FEP_ATTR_UNDERLINE
+  if (attr->type == FEP_ATTR_TYPE_UNDERLINE
       && attr->value != FEP_ATTR_UNDERLINE_NONE)
     r_sgr_attr->attr |= FEP_SGR_ATTR_UNDERLINE;
-  if (attr->type == FEP_ATTR_STANDOUT
+  if (attr->type == FEP_ATTR_TYPE_STANDOUT
       && attr->value != 0)
     r_sgr_attr->attr |= FEP_SGR_ATTR_STANDOUT;
-  if (attr->type == FEP_ATTR_BOLD
+  if (attr->type == FEP_ATTR_TYPE_BOLD
       && attr->value != 0)
     r_sgr_attr->attr |= FEP_SGR_ATTR_BOLD;
-  if (attr->type == FEP_ATTR_BLINK
+  if (attr->type == FEP_ATTR_TYPE_BLINK
       && attr->value != 0)
     r_sgr_attr->attr |= FEP_SGR_ATTR_BLINK;
   /* FIXME colors... */
@@ -79,17 +79,17 @@ _fep_sgr_params_to_attr (const char **params, int *sgr_codes,
       if (param == 0)
 	memcpy (r_attr, &_fep_empty_attr, sizeof(FepSgrAttr));
       else if (param == sgr_codes[FEP_SGR_PARAM_ENTER_UNDERLINE])
-	r_attr->attr |= FEP_ATTR_UNDERLINE;
+	r_attr->attr |= FEP_ATTR_TYPE_UNDERLINE;
       else if (param == sgr_codes[FEP_SGR_PARAM_EXIT_UNDERLINE])
-	r_attr->attr &= ~FEP_ATTR_UNDERLINE;
+	r_attr->attr &= ~FEP_ATTR_TYPE_UNDERLINE;
       else if (param == sgr_codes[FEP_SGR_PARAM_ENTER_STANDOUT])
-	r_attr->attr |= FEP_ATTR_STANDOUT;
+	r_attr->attr |= FEP_ATTR_TYPE_STANDOUT;
       else if (param == sgr_codes[FEP_SGR_PARAM_EXIT_STANDOUT])
-	r_attr->attr &= ~FEP_ATTR_STANDOUT;
+	r_attr->attr &= ~FEP_ATTR_TYPE_STANDOUT;
       else if (param == sgr_codes[FEP_SGR_PARAM_ENTER_BOLD])
-	r_attr->attr |= FEP_ATTR_BOLD;
+	r_attr->attr |= FEP_ATTR_TYPE_BOLD;
       else if (param == sgr_codes[FEP_SGR_PARAM_ENTER_BLINK])
-	r_attr->attr |= FEP_ATTR_BLINK;
+	r_attr->attr |= FEP_ATTR_TYPE_BLINK;
       else if (param == sgr_codes[FEP_SGR_PARAM_ORIG_PAIR])
 	r_attr->foreground = r_attr->background = 0;
       else if (param == sgr_codes[FEP_SGR_PARAM_ORIG_FORE])
@@ -97,9 +97,9 @@ _fep_sgr_params_to_attr (const char **params, int *sgr_codes,
       else if (param == sgr_codes[FEP_SGR_PARAM_ORIG_BACK])
 	r_attr->background = 0;
       else if (param == 22)	/* normal color or intensity */
-	r_attr->attr &= ~FEP_ATTR_BOLD;
+	r_attr->attr &= ~FEP_ATTR_TYPE_BOLD;
       else if (param == 25)	/* blink: off */
-	r_attr->attr &= ~FEP_ATTR_BLINK;
+	r_attr->attr &= ~FEP_ATTR_TYPE_BLINK;
       else if (/* set foreground color */
 	       (30 <= param && param <= 37)
 	       /* set foreground color, high intensity */

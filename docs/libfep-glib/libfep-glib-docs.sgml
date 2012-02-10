@@ -3,19 +3,22 @@
                "http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd"
 [
   <!ENTITY % local.common.attrib "xmlns:xi  CDATA  #FIXED 'http://www.w3.org/2003/XInclude'">
-  <!ENTITY version SYSTEM "version.xml">
 ]>
 <book id="index">
   <bookinfo>
     <title>libfep-glib Reference Manual</title>
     <releaseinfo>
-      for libfep-glib &version;.
+      for libfep-glib [VERSION].
+      The latest version of this documentation can be found on-line at
+      <ulink role="online-location" url="http://[SERVER]/libfep-glib/index.html">http://[SERVER]/libfep-glib/</ulink>.
     </releaseinfo>
   </bookinfo>
 
   <chapter>
-    <title>libfep-glib API references</title>
-        <xi:include href="xml/fepgclient.xml"/>
+    <title>[Insert title here]</title>
+        <xi:include href="xml/fepgattribute.xml"/>
+    <xi:include href="xml/fepgclient.xml"/>
+    <xi:include href="xml/fepgenumtypes.xml"/>
 
   </chapter>
   <chapter id="object-tree">

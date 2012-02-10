@@ -3,20 +3,23 @@
                "http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd"
 [
   <!ENTITY % local.common.attrib "xmlns:xi  CDATA  #FIXED 'http://www.w3.org/2003/XInclude'">
-  <!ENTITY version SYSTEM "version.xml">
 ]>
 <book id="index">
   <bookinfo>
     <title>libfep Reference Manual</title>
     <releaseinfo>
-      for libfep &version;.
+      for libfep [VERSION].
+      The latest version of this documentation can be found on-line at
+      <ulink role="online-location" url="http://[SERVER]/libfep/index.html">http://[SERVER]/libfep/</ulink>.
     </releaseinfo>
   </bookinfo>
 
   <chapter>
-    <title>libfep API references</title>
+    <title>[Insert title here]</title>
+        <xi:include href="xml/attribute.xml"/>
     <xi:include href="xml/client.xml"/>
     <xi:include href="xml/keydefs.xml"/>
+    <xi:include href="xml/logger.xml"/>
 
   </chapter>
   <chapter id="object-tree">
