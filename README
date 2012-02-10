@@ -11,13 +11,13 @@ Test:
 
 $ echo $SHLVL
 1
-$ fep -e /bin/sh
+$ fep /bin/sh
 $ echo $SHLVL
 2
-$ ./tests/fepcli -s "foo" # show text at the bottom
-$ { sleep 1; ./tests/fepcli -c "foo"; } & # show text at the cursor
-$ { sleep 1; ./tests/fepcli -f "bar"; } & # send text to the child process
-$ ./tests/fepcli -k # wait for a key event
+$ fepcli -s "foo" # show text at the bottom
+$ { sleep 1; fepcli -c "foo"; } & # show text at the cursor
+$ { sleep 1; fepcli -f "bar"; } & # send text to the child process
+$ fepcli -k # wait for a key event
 # type any key
 keyval = XX, modifiers = XX
 $
