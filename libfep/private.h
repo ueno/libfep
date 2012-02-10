@@ -85,6 +85,11 @@ typedef struct _FepList FepList;
 FepList *_fep_list_append (FepList *head, void *data);
 
 /* control.c */
+/* Note that each control message from server to client has return
+   value, while the opposite does not.
+
+   See _fep_dispatch_control_message in fep/control.c for server and
+   fep_client_dispatch in libfep/client.c for client handling. */
 typedef enum
   {
     /* client to server */
@@ -120,13 +125,13 @@ void     _fep_control_message_alloc_args         (FepControlMessage  *message,
                                                   size_t              n_args);
 void     _fep_control_message_free_args          (FepControlMessage  *message);
 void     _fep_control_message_free               (FepControlMessage  *message);
-int      _fep_control_message_read_int_arg       (FepControlMessage  *message,
+int      _fep_control_message_read_uint32_arg    (FepControlMessage  *message,
                                                   off_t               index,
-                                                  int32_t            *r_val);
-int      _fep_control_message_write_int_arg      (FepControlMessage  *message,
+                                                  uint32_t           *r_val);
+int      _fep_control_message_write_uint32_arg   (FepControlMessage  *message,
                                                   off_t               index,
-                                                  int32_t             val);
-int      _fep_control_message_write_byte_arg     (FepControlMessage  *message,
+                                                  uint32_t            val);
+int      _fep_control_message_write_uint8_arg    (FepControlMessage  *message,
                                                   off_t               index,
                                                   uint8_t             val);
 int      _fep_control_message_write_string_arg   (FepControlMessage  *message,

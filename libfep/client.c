@@ -236,9 +236,10 @@ command_key_event (FepClient *client,
 		   FepControlMessage *response)
 {
   FepEventKey event;
-  int retval, intval;
+  int retval;
+  uint32_t intval;
 
-  retval = _fep_control_message_read_int_arg (request, 0, &intval);
+  retval = _fep_control_message_read_uint32_arg (request, 0, &intval);
   if (retval < 0)
     {
       fep_log (FEP_LOG_LEVEL_WARNING, "can't read keyval");
@@ -246,7 +247,7 @@ command_key_event (FepClient *client,
     }
   event.keyval = intval;
 
-  retval = _fep_control_message_read_int_arg (request, 1, &intval);
+  retval = _fep_control_message_read_uint32_arg (request, 1, &intval);
   if (retval < 0)
     {
       fep_log (FEP_LOG_LEVEL_WARNING, "can't read modifiers");
@@ -257,14 +258,14 @@ command_key_event (FepClient *client,
  out:
   response->command = FEP_CONTROL_RESPONSE;
   _fep_control_message_alloc_args (response, 2);
-  _fep_control_message_write_byte_arg (response, 0, FEP_CONTROL_KEY_EVENT);
+  _fep_control_message_write_uint8_arg (response, 0, FEP_CONTROL_KEY_EVENT);
 
   intval = retval;
   if (retval == 0 && client->filter)
     {
       event.event.type = FEP_KEY_PRESS;
       intval = client->filter ((FepEvent *) &event, client->filter_data);
-      _fep_control_message_write_int_arg (response, 1, intval);
+      _fep_control_message_write_uint32_arg (response, 1, intval);
     }
 }
 
@@ -279,12 +280,9 @@ command_key_event (FepClient *client,
 int
 fep_client_dispatch (FepClient *client)
 {
-  /* See also _fep_dispatch_control_message in fep/control.c.  Note
-     that each control message from server to client has return value,
-     while the opposite has no return value. */
   static const struct
   {
-    int command;
+    FepControlCommand command;
     void (*handler) (FepClient *client,
 		     FepControlMessage *request,
 		     FepControlMessage *response);

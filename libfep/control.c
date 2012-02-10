@@ -25,51 +25,40 @@
 #include <errno.h>
 #include <assert.h>
 
-struct _CommandEntry
+static const struct
 {
   FepControlCommand command;
+  char *name;
   size_t n_args;
-};
-
-typedef struct _CommandEntry CommandEntry;
-CommandEntry commands[] =
+} commands[] =
   {
-    { FEP_CONTROL_SET_CURSOR_TEXT, 2 },
-    { FEP_CONTROL_SET_STATUS_TEXT, 2 },
-    { FEP_CONTROL_SEND_TEXT, 1 },
-    { FEP_CONTROL_SEND_DATA, 1 },
-    { FEP_CONTROL_KEY_EVENT, 2 },
-    { FEP_CONTROL_RESIZE_EVENT, 2 },
-    { FEP_CONTROL_RESPONSE, 2 },
+    { FEP_CONTROL_SET_CURSOR_TEXT, "SET_CURSOR_TEXT", 2 },
+    { FEP_CONTROL_SET_STATUS_TEXT, "SET_STATUS_TEXT", 2 },
+    { FEP_CONTROL_SEND_TEXT, "SEND_TEXT", 1 },
+    { FEP_CONTROL_SEND_DATA, "SEND_DATA", 1 },
+    { FEP_CONTROL_KEY_EVENT, "KEY_EVENT", 2 },
+    { FEP_CONTROL_RESIZE_EVENT, "RESIZE_EVENT", 2 },
+    { FEP_CONTROL_RESPONSE, "RESPONSE", 2 }
   };
 
-static CommandEntry *
-find_command_entry (FepControlCommand command)
+static int
+_fep_control_command_get_n_args (FepControlCommand command)
 {
   int i;
   for (i = 0; i < SIZEOF (commands); i++)
-    {
-      if (commands[i].command == command)
-	return &commands[i];
-    }
-  return NULL;
+    if (commands[i].command == command)
+      return commands[i].n_args;
+  return -1;
 }
 
 static const char *
-_fep_control_command_to_string (FepControlCommand command)
+_fep_control_command_get_name (FepControlCommand command)
 {
-  static const char *commands[] =
-    {
-      "SET_CURSOR_TEXT",
-      "SET_STATUS_TEXT",
-      "SEND_TEXT",
-      "SEND_DATA",
-      "KEY_EVENT",
-      "RESIZE_EVENT",
-      "RESPONSE"
-    };
-  assert (1 <= command && command <= SIZEOF (commands));
-  return commands[command - 1];
+  int i;
+  for (i = 0; i < SIZEOF (commands); i++)
+    if (commands[i].command == command)
+      return commands[i].name;
+  return NULL;
 }
 
 static char *
@@ -80,7 +69,7 @@ _fep_control_message_to_string (FepControlMessage *message)
   int i;
   char *buf, *p;
 
-  command_name = _fep_control_command_to_string (message->command);
+  command_name = _fep_control_command_get_name (message->command);
   command_length = strlen (command_name);
   total = command_length + 1;
   for (i = 0; i < message->n_args; i++)
@@ -115,7 +104,6 @@ int
 _fep_read_control_message (int fd,
 			   FepControlMessage *message)
 {
-  CommandEntry *entry;
   char buf[BUFSIZ];
   FepString *args;
   int retval, i;
@@ -137,8 +125,8 @@ _fep_read_control_message (int fd,
       return -1;
     }
 
-  entry = find_command_entry (buf[0]);
-  if (entry == NULL)
+  retval = _fep_control_command_get_n_args (buf[0]);
+  if (retval < -1)
     {
       fep_log (FEP_LOG_LEVEL_WARNING,
 	       "read unknown command %d",
@@ -146,10 +134,10 @@ _fep_read_control_message (int fd,
       return -1;
     }
 
-  message->command = entry->command;
-  message->args = calloc (entry->n_args, sizeof(FepString));
-  message->n_args = entry->n_args;
-  for (i = 0, args = message->args; i < entry->n_args; i++, args++)
+  message->command = buf[0];
+  message->n_args = retval;
+  message->args = calloc (message->n_args, sizeof(FepString));
+  for (i = 0, args = message->args; i < message->n_args; i++, args++)
     {
       FepString arg;
       uint32_t len;
@@ -304,8 +292,8 @@ _fep_transceive_control_message (int fd,
       _fep_control_message_free_args (response);
       fep_log (FEP_LOG_LEVEL_WARNING,
 	       "commands do not match (%s != %s)",
-	       _fep_control_command_to_string (*response->args[0].str),
-	       _fep_control_command_to_string (request->command));
+	       _fep_control_command_get_name (*response->args[0].str),
+	       _fep_control_command_get_name (request->command));
       return -1;
     }
 
@@ -329,19 +317,19 @@ _fep_control_message_free_args (FepControlMessage *message)
 }
 
 int
-_fep_control_message_read_int_arg (FepControlMessage *message,
-				   off_t index,
-				   int32_t *r_val)
+_fep_control_message_read_uint32_arg (FepControlMessage *message,
+                                      off_t              index,
+                                      uint32_t          *r_val)
 {
-  int32_t intval;
+  uint32_t intval;
 
   if (index > message->n_args)
     return -1;
 
-  if (message->args[index].len != sizeof(int32_t))
+  if (message->args[index].len != sizeof(uint32_t))
     return -1;
 
-  intval = *(int32_t *) message->args[index].str;
+  intval = *(uint32_t *) message->args[index].str;
 #ifdef WORDS_BIGENDIAN
   *r_val = bswap_32 (intval);
 #else
@@ -352,36 +340,36 @@ _fep_control_message_read_int_arg (FepControlMessage *message,
 }
 
 int
-_fep_control_message_write_int_arg (FepControlMessage *message,
-				    off_t index,
-				    int32_t val)
+_fep_control_message_write_uint32_arg (FepControlMessage *message,
+				       off_t              index,
+				       uint32_t           val)
 {
-  int32_t intval;
+  uint32_t intval;
 
   if (index > message->n_args)
     return -1;
 
-  message->args[index].str = calloc (1, sizeof(int32_t));
-  message->args[index].cap = message->args[index].len = sizeof(int32_t);
+  message->args[index].str = calloc (1, sizeof(uint32_t));
+  message->args[index].cap = message->args[index].len = sizeof(uint32_t);
 #ifdef WORDS_BIGENDIAN
   intval = bswap_32 (val);
 #else
   intval = val;
 #endif
-  memcpy (message->args[index].str, (char *) &intval, sizeof(int32_t));
+  memcpy (message->args[index].str, (char *) &intval, sizeof(uint32_t));
 
   return 0;
 }
 
 int
-_fep_control_message_write_byte_arg (FepControlMessage *message,
-				     off_t index,
-				     uint8_t val)
+_fep_control_message_write_uint8_arg (FepControlMessage *message,
+				      off_t index,
+				      uint8_t val)
 {
   if (index > message->n_args)
     return -1;
 
-  message->args[index].str = calloc (1, sizeof(char));
+  message->args[index].str = calloc (1, sizeof(uint8_t));
   message->args[index].cap = message->args[index].len = 1;
   *message->args[index].str = val;
 
