@@ -170,11 +170,11 @@ handle_winch_signal (Fep *fep)
   request.command = FEP_CONTROL_RESIZE_EVENT;
   _fep_control_message_alloc_args (&request, 2);
   _fep_control_message_write_uint32_arg (&request,
-					 1,
+					 0,
 					 (uint32_t) _winsize.ws_col);
   _fep_control_message_write_uint32_arg (&request,
-					 2,
-					 (int32_t) _winsize.ws_row);
+					 1,
+					 (uint32_t) _winsize.ws_row);
   for (i = 0; i < fep->n_clients; i++)
     {
       FepControlMessage response;
