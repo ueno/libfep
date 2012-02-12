@@ -19,7 +19,10 @@ INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/lib
 lib_LTLIBRARIES = libfep.la
 libfep_la_LDFLAGS =							\
 	-version-info "$(LT_CURRENT)":"$(LT_REVISION)":"$(LT_AGE)"	\
-	-export-dynamic
+        -export-dynamic							\
+        -export-symbols-regex "^(fep|_fep)"				\
+	$(NULL)
+
 libfep_la_SOURCES = string.c list.c control.c client.c logger.c
 libfep_la_LIBADD = $(top_builddir)/lib/libgnu.la
 

@@ -21,6 +21,12 @@ libfep_glib_la_SOURCES = fepgmarshalers.c $(libfep_glib_la_sources)
 libfep_glib_la_CFLAGS = $(GIO_CFLAGS) -I$(top_srcdir)
 libfep_glib_la_LIBADD = $(GIO_LIBS) $(top_builddir)/libfep/libfep.la
 
+libfep_glib_la_LDFLAGS =						\
+	-version-info "$(LT_CURRENT)":"$(LT_REVISION)":"$(LT_AGE)"	\
+        -export-dynamic							\
+        -export-symbols-regex "^fep_g"				\
+	$(NULL)
+
 libfepglibincludedir = $(includedir)/libfep-glib
 libfepglib_public_headers = libfep-glib.h fepgattribute.h fepgclient.h
 libfepglibinclude_HEADERS = fepgenumtypes.h $(libfepglib_public_headers)
