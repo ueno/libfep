@@ -236,6 +236,7 @@ int
 fep_run (Fep *fep, const char *command[])
 {
   pid_t pid;
+  int retval;
 
   if (isatty (fep->tty_in))
     fep->tty_in = open ("/dev/tty", O_RDONLY);
@@ -245,9 +246,8 @@ fep_run (Fep *fep, const char *command[])
   ioctl (fep->tty_in, TIOCGWINSZ, &fep->winsize);
   fep->winsize.ws_row--;
 
-  fep->server = _fep_open_control_socket ("fep-XXXXXX/control",
-					  &fep->control_socket_path);
-  if (fep->server < 0)
+  retval = _fep_open_control_socket (fep);
+  if (retval < 0)
     return -1;
 
   setenv ("LIBFEP_CONTROL_SOCK", fep->control_socket_path, 1);
@@ -496,17 +496,6 @@ fep_free (Fep *fep)
   for (i = 0; i < fep->n_clients; i++)
     if (fep->clients[i] >= 0)
       close (fep->clients[i]);
-
-  if (fep->server >= 0)
-    close (fep->server);
-
-  unlink (fep->control_socket_path);
-  p = strrchr (fep->control_socket_path, '/');
-  assert (p != NULL);
-  *p = '\0';
-
-  rmdir (fep->control_socket_path);
-  free (fep->control_socket_path);
 
   free (fep->cursor_text);
   free (fep->status_text);

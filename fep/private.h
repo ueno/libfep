@@ -214,8 +214,8 @@ bool             _fep_output_get_cursor_position
                                             FepPoint           *point);
 
 /* control.c */
-int              _fep_open_control_socket  (const char         *template,
-                                            char              **r_path);
+int              _fep_open_control_socket  (Fep                *fep);
+void             _fep_close_control_socket (Fep                *fep);
 int              _fep_dispatch_control_message
                                            (Fep                *fep,
                                             int                 fd);

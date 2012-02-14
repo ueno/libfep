@@ -24,6 +24,7 @@
 #include <stdbool.h>
 #include <unistd.h>
 #include <errno.h>
+#include <stddef.h>		/* offsetof */
 
 /**
  * SECTION:client
@@ -60,6 +61,7 @@ fep_client_open (const char *address)
 {
   FepClient *client;
   struct sockaddr_un sun;
+  ssize_t sun_len;
   int retval;
 
   if (!address)
@@ -67,13 +69,31 @@ fep_client_open (const char *address)
   if (!address)
     return NULL;
 
+  if (strlen (address) + 1 >= sizeof(sun.sun_path))
+    {
+      fep_log (FEP_LOG_LEVEL_WARNING,
+	       "unix domain socket path too long: %d + 1 >= %d",
+	       strlen (address),
+	       sizeof (sun.sun_path));
+      free (address);
+      return NULL;
+    }
+
   client = malloc (sizeof(FepClient));
   client->filter_running = false;
   client->messages = NULL;
 
   memset (&sun, 0, sizeof(struct sockaddr_un));
   sun.sun_family = AF_UNIX;
+
+#ifdef __linux__
+  sun.sun_path[0] = '\0';
+  memcpy (sun.sun_path + 1, address, strlen (address));
+  sun_len = offsetof (struct sockaddr_un, sun_path) + strlen (address) + 1;
+#else
   memcpy (sun.sun_path, address, strlen (address));
+  sun_len = sizeof (struct sockaddr_un);
+#endif
 
   client->control = socket (AF_UNIX, SOCK_STREAM, 0);
   if (client->control < 0)
@@ -84,7 +104,7 @@ fep_client_open (const char *address)
 
   retval = connect (client->control,
 		    (const struct sockaddr *) &sun,
-		    SUN_LEN (&sun));
+		    sun_len);
   if (retval < 0)
     {
       close (client->control);

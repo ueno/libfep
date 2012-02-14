@@ -17,6 +17,7 @@
 
 gnulib-tool --libtool --quiet --import \
     byteswap \
+    stddef \
     forkpty \
     stdbool \
     stdint \
