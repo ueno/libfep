@@ -103,6 +103,7 @@ _fep_char_to_key (char      tty,
       /* C-space */
     case 0:
       key = ' ';
+      state |= FEP_CONTROL_MASK;
       break;
     case '\t':
       key = FEP_Tab;
