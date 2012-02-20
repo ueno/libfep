@@ -28,7 +28,11 @@ gnulib-tool --libtool --quiet --import \
     nl_langinfo \
     strndup \
     memmem \
-    pselect || exit 1
+    pselect \
+    xalloc \
+    xvasprintf \
+    xstrndup \
+    minmax || exit 1
 
 gtkdocize || exit 1
 
