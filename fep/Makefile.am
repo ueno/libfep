@@ -37,6 +37,10 @@ fep_LDADD =					\
 	$(NCURSES_LIBS)				\
 	$(PTY_LIB)				\
 	$(LTLIBICONV)				\
+	$(LIBSOCKET)				\
+	$(LIB_SELECT)				\
+	$(LIB_PTHREAD_SIGMASK)			\
+	$(LTLIBTHREAD)				\
 	$(top_builddir)/lib/libgnu.la		\
 	$(top_builddir)/libfep/libfep.la	\
 	$(NULL)

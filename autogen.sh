@@ -26,7 +26,9 @@ gnulib-tool --libtool --quiet --import \
     wcswidth \
     striconv \
     nl_langinfo \
-    strndup || exit 1
+    strndup \
+    memmem \
+    pselect || exit 1
 
 gtkdocize || exit 1
 
