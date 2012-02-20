@@ -72,7 +72,7 @@ INTROSPECTION_COMPILER_ARGS = --includedir=$(srcdir)
 
 if HAVE_INTROSPECTION
 Fep@FEP_LIBRARY_SUFFIX@.gir: libfep-glib.la
-Fep@FEP_LIBRARY_SUFFIX_U@_gir_SCANNERFLAGS = --pkg=libfep-glib
+Fep@FEP_LIBRARY_SUFFIX_U@_gir_SCANNERFLAGS = --pkg-export=libfep-glib
 Fep@FEP_LIBRARY_SUFFIX_U@_gir_INCLUDES = GLib-2.0 GObject-2.0 Gio-2.0
 Fep@FEP_LIBRARY_SUFFIX_U@_gir_CFLAGS = $(libfep_glib_la_CFLAGS)
 Fep@FEP_LIBRARY_SUFFIX_U@_gir_LIBS = libfep-glib.la
