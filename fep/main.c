@@ -23,6 +23,10 @@
 #include <getopt.h>
 #include <locale.h>
 
+#ifndef _LIBC
+char *program_name = "fep";
+#endif
+
 static void
 usage (FILE *out, const char *program_name)
 {

@@ -24,6 +24,10 @@
 #include <getopt.h>
 #include <string.h>
 
+#ifndef _LIBC
+char *program_name = "fepcli";
+#endif
+
 static void
 usage (FILE *out, const char *program_name)
 {
