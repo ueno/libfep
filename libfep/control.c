@@ -75,7 +75,7 @@ _fep_control_message_to_string (FepControlMessage *message)
   for (i = 0; i < message->n_args; i++)
     total += message->args[i].len * 2 + 1;
 
-  buf = malloc (total);
+  buf = xcharalloc (total);
   memset (buf, 0, total);
 
   p = buf;
@@ -136,7 +136,7 @@ _fep_read_control_message (int fd,
 
   message->command = buf[0];
   message->n_args = retval;
-  message->args = calloc (message->n_args, sizeof(FepString));
+  message->args = xcalloc (message->n_args, sizeof(FepString));
   for (i = 0, args = message->args; i < message->n_args; i++, args++)
     {
       FepString arg;
@@ -170,7 +170,7 @@ _fep_read_control_message (int fd,
 	  _fep_string_append (&arg, buf, retval);
 	  len -= retval;
 	}
-      args->str = malloc (arg.len);
+      args->str = xcharalloc (arg.len);
       memcpy (args->str, arg.str, arg.len);
       args->len = arg.len;
       _fep_string_clear (&arg);
@@ -303,7 +303,7 @@ _fep_transceive_control_message (int fd,
 void
 _fep_control_message_alloc_args (FepControlMessage *message, size_t n_args)
 {
-  message->args = calloc (n_args, sizeof(FepString));
+  message->args = xcalloc (n_args, sizeof(FepString));
   message->n_args = n_args;
 }
 
@@ -349,14 +349,13 @@ _fep_control_message_write_uint32_arg (FepControlMessage *message,
   if (index > message->n_args)
     return -1;
 
-  message->args[index].str = calloc (1, sizeof(uint32_t));
-  message->args[index].cap = message->args[index].len = sizeof(uint32_t);
 #ifdef WORDS_BIGENDIAN
   intval = bswap_32 (val);
 #else
   intval = val;
 #endif
-  memcpy (message->args[index].str, (char *) &intval, sizeof(uint32_t));
+  message->args[index].str = xmemdup ((char *) &intval, sizeof(uint32_t));
+  message->args[index].cap = message->args[index].len = sizeof(uint32_t);
 
   return 0;
 }
@@ -369,9 +368,8 @@ _fep_control_message_write_uint8_arg (FepControlMessage *message,
   if (index > message->n_args)
     return -1;
 
-  message->args[index].str = calloc (1, sizeof(uint8_t));
+  message->args[index].str = xmemdup ((char *) val, sizeof(uint8_t));
   message->args[index].cap = message->args[index].len = 1;
-  *message->args[index].str = val;
 
   return 0;
 }
@@ -385,9 +383,8 @@ _fep_control_message_write_string_arg (FepControlMessage *message,
   if (index > message->n_args)
     return -1;
 
-  message->args[index].str = calloc (length, sizeof(char));
+  message->args[index].str = xmemdup (str, length);
   message->args[index].cap = message->args[index].len = length;
-  memcpy (message->args[index].str, str, length);
 
   return 0;
 }
@@ -449,7 +446,7 @@ _fep_control_message_write_attribute_arg (FepControlMessage *message,
   if (index > message->n_args)
     return -1;
 
-  p = message->args[index].str = calloc (4, sizeof(uint32_t));
+  p = message->args[index].str = xcalloc (4, sizeof(uint32_t));
   message->args[index].cap = message->args[index].len = 4 * sizeof(uint32_t);
 
   intval = attr->type;
@@ -505,7 +502,7 @@ FepList *
 _fep_append_control_message (FepList *head,
 			     FepControlMessage *message)
 {
-  FepControlMessage *_message = calloc (1, sizeof(FepControlMessage));
+  FepControlMessage *_message = xzalloc (sizeof(FepControlMessage));
   _fep_control_message_copy (_message, message);
 
   if (fep_get_log_level () >= FEP_LOG_LEVEL_DEBUG)

@@ -22,7 +22,7 @@
 FepList *
 _fep_list_append (FepList *head, void *data)
 {
-  FepList *_head = calloc (1, sizeof(FepList));
+  FepList *_head = xzalloc (sizeof(FepList));
   _head->data = data;
 
   if (head == NULL)

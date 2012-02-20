@@ -79,7 +79,7 @@ fep_client_open (const char *address)
       return NULL;
     }
 
-  client = malloc (sizeof(FepClient));
+  client = xzalloc (sizeof(FepClient));
   client->filter_running = false;
   client->messages = NULL;
 

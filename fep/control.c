@@ -37,7 +37,7 @@ create_socket_name (const char *template)
     p = "/tmp";
 
   len = strlen (p) + strlen (template) + 2;
-  name = malloc (len);
+  name = xcharalloc (len);
   memset (name, 0, len);
   memcpy (name, p, strlen (p));
   if (p[strlen (p) - 1] != '/')
@@ -58,7 +58,7 @@ create_socket_name (const char *template)
 static void
 remove_control_socket (const char *path)
 {
-  char *_path = strdup (path), *p;
+  char *_path = xstrdup (path), *p;
   unlink (_path);
   p = strrchr (_path, '/');
   assert (p != NULL);

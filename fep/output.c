@@ -278,7 +278,7 @@ _fep_output_status_text (Fep          *fep,
   if (strcmp (fep->status_text, text) != 0)
     {
       free (fep->status_text);
-      fep->status_text = strdup (text);
+      fep->status_text = xstrdup (text);
     }
 
   memcpy (&fep->status_text_attr, attr, sizeof(FepAttribute));
@@ -317,7 +317,7 @@ _fep_output_cursor_text (Fep          *fep,
 				    fep->cursor.col);
 
       width = MIN (width, fep->winsize.ws_col - fep->cursor.col);
-      spaces = malloc (width * sizeof(char));
+      spaces = xcharalloc (width);
       memset (spaces, ' ', width * sizeof(char));
       write (fep->tty_out, spaces, width * sizeof(char));
       free  (spaces);
@@ -334,7 +334,7 @@ _fep_output_cursor_text (Fep          *fep,
 	  || strcmp (fep->cursor_text, text) != 0)
 	{
 	  free (fep->cursor_text);
-	  fep->cursor_text = strdup (text);
+	  fep->cursor_text = xstrdup (text);
 	}
 
       _fep_output_save_cursor (fep);

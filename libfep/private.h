@@ -26,18 +26,14 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <unistd.h>
+#include "xalloc.h"
+#include "xvasprintf.h"
+#include "xstrndup.h"
+#include "minmax.h"
 #include <libfep/libfep.h>
 
 #ifndef BUFSIZ
 #define BUFSIZ 4096
-#endif
-
-#ifndef MIN
-#define MIN(a,b) ((a) < (b) ? (a) : (b))
-#endif
-
-#ifndef MAX
-#define MAX(a,b) ((a) > (b) ? (a) : (b))
 #endif
 
 #define SIZEOF(array) (sizeof((array)) / sizeof((array)[0]))

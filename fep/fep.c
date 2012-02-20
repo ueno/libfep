@@ -218,17 +218,16 @@ handle_tstp_signal (Fep *fep)
 Fep *
 fep_new (void)
 {
-  Fep *fep = malloc (sizeof(Fep));
+  Fep *fep = xzalloc (sizeof(Fep));
   int i;
 
-  memset (fep, 0, sizeof (*fep));
   fep->tty_in = STDIN_FILENO;
   fep->tty_out = STDOUT_FILENO;
   fep->pty = -1;
   fep->server = -1;
   for (i = 0; i < FEP_MAX_CLIENTS; i++)
     fep->clients[i] = -1;
-  fep->status_text = strdup ("");
+  fep->status_text = xstrdup ("");
   return fep;
 }
 
@@ -297,13 +296,13 @@ remove_padding (const char *str)
   char *start, *p, *dest;
   start = memmem (str, len, "$<", 2);
   if (start == NULL)
-    return strdup (str);
+    return xstrdup (str);
   for (p = start; *p != '\0' && isdigit (*p); p++)
     ;
   if (*p != '>')
-    return strdup (str);
+    return xstrdup (str);
   p++;
-  dest = malloc (len - (p - start) + 1);
+  dest = xcharalloc (len - (p - start) + 1);
   memcpy (dest, str, start - str);
   memcpy (dest + (start - str), p, len - (p - str));
   return dest;

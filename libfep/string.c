@@ -27,7 +27,7 @@ _fep_string_append (FepString *buf, const char *str, size_t count)
   if (buf->len + count > buf->cap)
     {
       buf->cap = MAX(buf->cap * 2, buf->len + count);
-      buf->str = realloc (buf->str, buf->cap);
+      buf->str = xrealloc (buf->str, buf->cap);
     }
   memcpy (buf->str + buf->len, str, count);
   buf->len += count;
@@ -44,7 +44,7 @@ _fep_string_copy (FepString *dst, FepString *src)
 {
   dst->cap = src->cap;
   dst->len = src->len;
-  dst->str = malloc (src->cap);
+  dst->str = xmalloc (src->cap);
   memcpy (dst->str, src->str, src->len);
 }
 
@@ -83,14 +83,14 @@ _fep_strsplit_full (const char *str, const char *delimiter, int max_tokens,
 
   p = str;
   q = search (p, delimiter, &next);
-  r = strv = calloc (n_delimiters + 2, sizeof (char *));
+  r = strv = xcalloc (n_delimiters + 2, sizeof (char *));
   for (; q && *q != '\0'; q = search (p, delimiter, &next))
     {
-      *r++ = strndup (p, q - p);
+      *r++ = xstrndup (p, q - p);
       p = next;
     }
   if (p - str < strlen (str))
-    *r = strdup (p);
+    *r = xstrdup (p);
 
   return strv;
 }
@@ -119,7 +119,7 @@ _fep_strjoinv (char **strv, const char *delimiter)
       if (*(p + 1))
 	len += delimiter_len;
     }
-  str = calloc (len + 1, sizeof(char));
+  str = xcalloc (len + 1, sizeof(char));
   for (p = strv; *p; p++)
     {
       strcat (str, *p);
@@ -156,7 +156,7 @@ _fep_strwidth (const char *str)
   int width;
 
   p = str;
-  wcs = calloc (strlen (str) + 1, sizeof(wchar_t));
+  wcs = xcalloc (strlen (str) + 1, sizeof(wchar_t));
   wcs_len = mbsrtowcs (wcs, &p, strlen (str), NULL);
   width = wcswidth (wcs, wcs_len);
   free (wcs);
@@ -174,7 +174,7 @@ _fep_strtrunc (const char *str, int width)
   int total, i;
 
   p = str;
-  wcs = calloc (strlen (str) + 1, sizeof(wchar_t));
+  wcs = xcalloc (strlen (str) + 1, sizeof(wchar_t));
   wcs_len = mbsrtowcs (wcs, &p, strlen (str), NULL);
   if (wcs_len == (size_t) -1)
     {
@@ -193,7 +193,7 @@ _fep_strtrunc (const char *str, int width)
     }
   wcs[i] = L'\0';
   q = wcs;
-  mbs = calloc (strlen (str) + 1, sizeof(char));
+  mbs = xcalloc (strlen (str) + 1, sizeof(char));
   wcsrtombs (mbs, &q, strlen (str), NULL);
   free (wcs);
 
@@ -228,7 +228,7 @@ _fep_substring (const char *str, int from, int to)
   int index;
 
   p = str;
-  wcs = calloc (strlen (str) + 1, sizeof(wchar_t));
+  wcs = xcalloc (strlen (str) + 1, sizeof(wchar_t));
   wcs_len = mbsrtowcs (wcs, &p, strlen (str), NULL);
   if (wcs_len == (size_t) -1)
     {
@@ -255,7 +255,7 @@ _fep_substring (const char *str, int from, int to)
 
   wcs[to] = L'\0';
   q = &wcs[from];
-  mbs = calloc (strlen (str) + 1, sizeof(char));
+  mbs = xcalloc (strlen (str) + 1, sizeof(char));
   wcsrtombs (mbs, &q, strlen (str), NULL);
   free (wcs);
 

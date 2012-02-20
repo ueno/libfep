@@ -103,7 +103,7 @@ _fep_csi_parse (const char *str,
       fep_log (FEP_LOG_LEVEL_DEBUG, "premature CSI at P");
       return NULL;
     }
-  csi.params = malloc (p - start + 1);
+  csi.params = xcharalloc (p - start + 1);
   memcpy (csi.params, start, p - start);
   csi.params[p - start] = '\0';
   
@@ -117,7 +117,7 @@ _fep_csi_parse (const char *str,
       fep_log (FEP_LOG_LEVEL_DEBUG, "premature CSI at I");
       return NULL;
     }
-  csi.intermediate = malloc (p - start + 1);
+  csi.intermediate = xcharalloc (p - start + 1);
   memcpy (csi.intermediate, start, p - start);
   csi.intermediate[p - start] = '\0';
 
@@ -131,8 +131,7 @@ _fep_csi_parse (const char *str,
     }
   csi.final = *p++;
 
-  r_csi = malloc (sizeof(FepCSI));
-  memcpy (r_csi, &csi, sizeof(FepCSI));
+  r_csi = xmemdup (&csi, sizeof(FepCSI));
   if (r_endptr)
     *r_endptr = (char *) p;
   return r_csi;
@@ -141,15 +140,10 @@ _fep_csi_parse (const char *str,
 char *
 _fep_csi_format (FepCSI *csi)
 {
-  char *str;
-  size_t len;
-
-  len = 3 + strlen (csi->params) + strlen (csi->intermediate);
-  str = calloc (len + 1, sizeof(char));
-  snprintf (str, len + 1, "\033\133%s%s%c",
-	    csi->params, csi->intermediate, csi->final);
-
-  return str;
+  return xasprintf ("\033\133%s%s%c",
+		    csi->params,
+		    csi->intermediate,
+		    csi->final);
 }
 
 void
