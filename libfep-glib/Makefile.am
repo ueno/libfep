@@ -27,7 +27,7 @@ libfep_glib_la_LDFLAGS =						\
         -export-symbols-regex "^fep_g"				\
 	$(NULL)
 
-libfepglibincludedir = $(includedir)/libfep-glib
+libfepglibincludedir = $(includedir)/fep-@FEP_API_VERSION@/libfep-glib
 libfepglib_public_headers = libfep-glib.h fepgattribute.h fepgclient.h
 libfepglibinclude_HEADERS = fepgenumtypes.h $(libfepglib_public_headers)
 noinst_HEADERS = fepgmarshalers.h
