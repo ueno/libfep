@@ -368,7 +368,7 @@ _fep_control_message_write_uint8_arg (FepControlMessage *message,
   if (index > message->n_args)
     return -1;
 
-  message->args[index].str = xmemdup ((char *) val, sizeof(uint8_t));
+  message->args[index].str = xmemdup ((char *) &val, sizeof(uint8_t));
   message->args[index].cap = message->args[index].len = 1;
 
   return 0;
