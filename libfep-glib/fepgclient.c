@@ -42,7 +42,7 @@ enum
     LAST_SIGNAL
   };
 
-guint signals[LAST_SIGNAL] = {0};
+static guint signals[LAST_SIGNAL] = {0};
 
 #define I_(string) g_intern_static_string (string)
 
