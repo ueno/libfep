@@ -26,6 +26,10 @@
 #include <errno.h>
 #include <stddef.h>		/* offsetof */
 
+#ifndef _LIBC
+char *program_name = "libfep";
+#endif
+
 /**
  * SECTION:client
  * @short_description: Client connection to FEP server
