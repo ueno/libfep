@@ -74,8 +74,10 @@ _fep_output_set_attributes (Fep *fep, const FepSgrAttr *attr)
   str = _fep_csi_format (&csi);
   free (csi.params);
 
-  fep_log (FEP_LOG_LEVEL_DEBUG, "set attributes %u %u %u",
+  fep_log (FEP_LOG_LEVEL_DEBUG, "set attributes %u %u %u -> %u %u %u",
+	   fep->attr.attr, fep->attr.foreground, fep->attr.background,
 	   attr->attr, attr->foreground, attr->background);
+  memcpy (&fep->attr, attr, sizeof (FepSgrAttr));
 
   _fep_putp (fep, str);
   free (str);
@@ -92,7 +94,7 @@ _fep_output_change_scroll_region (Fep *fep, int start, int end)
 static void
 apply_attr (Fep *fep, const FepSgrAttr *attr)
 {
-  if ((fep->attr.attr ^ ~attr->attr) & FEP_SGR_ATTR_MASK
+  if ((fep->attr.attr & ~attr->attr) & FEP_SGR_ATTR_MASK
       || (fep->attr.foreground != 0 && attr->foreground == 0)
       || (fep->attr.background != 0 && attr->background == 0))
     {
@@ -100,20 +102,10 @@ apply_attr (Fep *fep, const FepSgrAttr *attr)
       _fep_putp (fep, exit_attribute_mode);
       _fep_output_set_attributes (fep, attr);
     }
-  else
+  else if (memcmp (&fep->attr, attr, sizeof(FepSgrAttr)) != 0)
     {
-      /* if one of attr bits are being set, apply the difference */
-      FepSgrAttr _attr;
-      _attr.attr = (fep->attr.attr ^ attr->attr) & attr->attr;
-      _attr.foreground = attr->foreground;
-      _attr.background = attr->background;
-      if (fep->attr.foreground == _attr.foreground)
-	_attr.foreground = 0;
-      if (fep->attr.background == _attr.background)
-	_attr.background = 0;
-      _fep_output_set_attributes (fep, &_attr);
+      _fep_output_set_attributes (fep, attr);
     }
-  memcpy (&fep->attr, attr, sizeof(FepSgrAttr));
 }
 
 void
@@ -148,11 +140,12 @@ _fep_output_string_from_pty (Fep *fep, const char *str, int str_len)
 		       attr.background);
 	      sgr[sgr_len] = c;
 	      _fep_strfreev (params);
-	      memcpy (&fep->attr, &attr, sizeof(FepSgrAttr));
+	      memcpy (&fep->attr_pty, &attr, sizeof(FepSgrAttr));
 	      _fep_csi_free (csi);
 	    }
 	  p = sgr + sgr_len;
 	}
+      memcpy (&fep->attr, &fep->attr_pty, sizeof(FepSgrAttr));
       if (sgr != NULL)
 	_fep_string_append (&fep->ptybuf, sgr, sgr_len);
       fep->cursor.row = fep->cursor.col = -1;
