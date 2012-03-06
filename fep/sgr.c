@@ -123,50 +123,20 @@ _fep_sgr_params_from_attr (const FepSgrAttr *attr,
     {
       if ((attr->attr & FEP_SGR_ATTR_UNDERLINE)
 	  && sgr_codes[FEP_SGR_PARAM_ENTER_UNDERLINE] != 0)
-	{
-	  *p = malloc ((MAX_PARAM_DIGITS + 1)  * sizeof (char *));
-	  snprintf (*p, MAX_PARAM_DIGITS,
-		    "%d", sgr_codes[FEP_SGR_PARAM_ENTER_UNDERLINE]);
-	  p++;
-	}
+	*p++ = xasprintf ("%d", sgr_codes[FEP_SGR_PARAM_ENTER_UNDERLINE]);
       if ((attr->attr & FEP_SGR_ATTR_STANDOUT)
 	  && sgr_codes[FEP_SGR_PARAM_ENTER_STANDOUT] != 0)
-	{
-	  *p = malloc ((MAX_PARAM_DIGITS + 1)  * sizeof (char *));
-	  snprintf (*p, MAX_PARAM_DIGITS,
-		    "%d", sgr_codes[FEP_SGR_PARAM_ENTER_STANDOUT]);
-	  p++;
-	}
+	*p++ = xasprintf ("%d", sgr_codes[FEP_SGR_PARAM_ENTER_STANDOUT]);
       if ((attr->attr & FEP_SGR_ATTR_BOLD)
 	  && sgr_codes[FEP_SGR_PARAM_ENTER_BOLD] != 0)
-	{
-	  *p = malloc ((MAX_PARAM_DIGITS + 1)  * sizeof (char *));
-	  snprintf (*p, MAX_PARAM_DIGITS,
-		    "%d", sgr_codes[FEP_SGR_PARAM_ENTER_BOLD]);
-	  p++;
-	}
+	*p++ = xasprintf ("%d", sgr_codes[FEP_SGR_PARAM_ENTER_BOLD]);
       if ((attr->attr & FEP_SGR_ATTR_BLINK)
 	  && sgr_codes[FEP_SGR_PARAM_ENTER_BLINK] != 0)
-	{
-	  *p = malloc ((MAX_PARAM_DIGITS + 1)  * sizeof (char *));
-	  snprintf (*p, MAX_PARAM_DIGITS,
-		    "%d", sgr_codes[FEP_SGR_PARAM_ENTER_BLINK]);
-	  p++;
-	}
+	*p++ = xasprintf ("%d", sgr_codes[FEP_SGR_PARAM_ENTER_BLINK]);
       if (attr->foreground != 0)
-	{
-	  *p = malloc ((MAX_PARAM_DIGITS + 1)  * sizeof (char *));
-	  snprintf (*p, MAX_PARAM_DIGITS,
-		    "%d", attr->foreground);
-	  p++;
-	}
+	*p++ = xasprintf ("%d", attr->foreground);
       if (attr->background != 0)
-	{
-	  *p = malloc ((MAX_PARAM_DIGITS + 1)  * sizeof (char *));
-	  snprintf (*p, MAX_PARAM_DIGITS,
-		    "%d", attr->background + 10);
-	  p++;
-	}
+	*p++ = xasprintf ("%d", attr->background + 10);
     }
   return params;
 }
