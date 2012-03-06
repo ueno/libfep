@@ -371,6 +371,7 @@ main_loop (Fep *fep)
 		{
 		  if (_fep_csi_to_key (csi, &keyval, &state))
 		    is_key_read = true;
+		  _fep_csi_free (csi);
 		}
 	      else
 		{
@@ -485,7 +486,6 @@ void
 fep_free (Fep *fep)
 {
   int i;
-  char *p;
 
   reset_signal_handler ();
 
@@ -495,6 +495,8 @@ fep_free (Fep *fep)
   for (i = 0; i < fep->n_clients; i++)
     if (fep->clients[i] >= 0)
       close (fep->clients[i]);
+
+  _fep_close_control_socket (fep);
 
   free (fep->cursor_text);
   free (fep->status_text);

@@ -65,6 +65,7 @@ remove_control_socket (const char *path)
   *p = '\0';
 
   rmdir (_path);
+  free (_path);
 }
 
 int
