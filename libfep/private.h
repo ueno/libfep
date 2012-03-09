@@ -112,9 +112,6 @@ int      _fep_read_control_message               (int                 fd,
                                                   FepControlMessage  *message);
 int      _fep_write_control_message              (int                 fd,
                                                   FepControlMessage  *message);
-int      _fep_transceive_control_message         (int                 fd,
-                                                  FepControlMessage  *request,
-                                                  FepControlMessage  *response);
 FepList *_fep_append_control_message             (FepList            *head,
                                                   FepControlMessage  *message);
 void     _fep_control_message_alloc_args         (FepControlMessage  *message,

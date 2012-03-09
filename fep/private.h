@@ -216,8 +216,17 @@ bool             _fep_output_get_cursor_position
 /* control.c */
 int              _fep_open_control_socket  (Fep                *fep);
 void             _fep_close_control_socket (Fep                *fep);
+int              _fep_read_control_message_from_fd
+                                           (Fep                *fep,
+					    int                fd,
+					    FepControlMessage  *message);
 int              _fep_dispatch_control_message
                                            (Fep                *fep,
-                                            int                 fd);
+                                            FepControlMessage  *message);
+int              _fep_transceive_control_message
+                                           (Fep                *fep,
+					    int                fd,
+					    FepControlMessage  *request,
+					    FepControlMessage  *response);
 
 #endif	/* __FEP_PRIVATE_H__ */
