@@ -179,7 +179,8 @@ handle_winch_signal (Fep *fep)
     {
       FepControlMessage response;
 
-      if (_fep_transceive_control_message (fep->clients[i],
+      if (_fep_transceive_control_message (fep,
+					   fep->clients[i],
 					   &request,
 					   &response) == 0)
 	_fep_control_message_free_args (&response);
@@ -401,7 +402,8 @@ main_loop (Fep *fep)
 		      FepControlMessage response;
 		      if (fep->clients[j] < 0)
 			continue;
-		      if (_fep_transceive_control_message (fep->clients[j],
+		      if (_fep_transceive_control_message (fep,
+							   fep->clients[j],
 							   &request,
 							   &response) == 0)
 			{
@@ -473,7 +475,16 @@ main_loop (Fep *fep)
       for (i = 0; i < fep->n_clients; i++)
 	{
 	  if (fep->clients[i] >= 0 && FD_ISSET(fep->clients[i], &fds))
-	    _fep_dispatch_control_message (fep, fep->clients[i]);
+	    {
+	      FepControlMessage message;
+	      if (_fep_read_control_message_from_fd (fep,
+						     fep->clients[i],
+						     &message) == 0)
+		{
+		  _fep_dispatch_control_message (fep, &message);
+		  _fep_control_message_free_args (&message);
+		}
+	    }
 	}
     }
   free (_clear_screen);

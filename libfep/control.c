@@ -172,7 +172,7 @@ _fep_read_control_message (int fd,
 	}
       args->str = xcharalloc (arg.len);
       memcpy (args->str, arg.str, arg.len);
-      args->len = arg.len;
+      args->cap = args->len = arg.len;
       _fep_string_clear (&arg);
       free (arg.str);
       arg.str = NULL;
@@ -244,59 +244,6 @@ _fep_write_control_message (int fd,
       fep_log (FEP_LOG_LEVEL_DEBUG, "write %s", str);
       free (str);
     }
-  return 0;
-}
-
-int
-_fep_transceive_control_message (int fd,
-				 FepControlMessage *request,
-				 FepControlMessage *response)
-{
-  int retval;
-
-  retval = _fep_write_control_message (fd, request);
-  if (retval < 0)
-    return retval;
-
-  retval = _fep_read_control_message (fd, response);
-  if (retval < 0)
-    return retval;
-
-  if (response->command != FEP_CONTROL_RESPONSE)
-    {
-      fep_log (FEP_LOG_LEVEL_WARNING,
-	       "not a control response %d",
-	       response->command);
-      _fep_control_message_free_args (response);
-      return -1;
-    }
-
-  if (response->n_args == 0)
-    {
-      _fep_control_message_free_args (response);
-      fep_log (FEP_LOG_LEVEL_WARNING,
-	       "too few arguments for RESPONSE");
-      return -1;
-    }
-
-  if (response->args[0].len != 1)
-    {
-      _fep_control_message_free_args (response);
-      fep_log (FEP_LOG_LEVEL_WARNING,
-	       "can't extract command from RESPONSE");
-      return -1;
-    }
-
-  if (*response->args[0].str != request->command)
-    {
-      _fep_control_message_free_args (response);
-      fep_log (FEP_LOG_LEVEL_WARNING,
-	       "commands do not match (%s != %s)",
-	       _fep_control_command_get_name (*response->args[0].str),
-	       _fep_control_command_get_name (request->command));
-      return -1;
-    }
-
   return 0;
 }
 
