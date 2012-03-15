@@ -149,6 +149,17 @@ _fep_output_string_from_pty (Fep *fep, const char *str, int str_len)
       if (sgr != NULL)
 	_fep_string_append (&fep->ptybuf, sgr, sgr_len);
       fep->cursor.row = fep->cursor.col = -1;
+
+      /* Restore cursor text that might be overwritten with str above. */
+      if (fep->cursor_text)
+	{
+	  char *cursor_text = fep->cursor_text;
+	  fep->cursor_text = NULL;
+	  _fep_output_cursor_text (fep, cursor_text, &fep->cursor_text_attr);
+	  free (cursor_text);
+	}
+
+      /* FIXME: no need to restore status text as well? */
     }
 }
 
