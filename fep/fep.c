@@ -364,23 +364,15 @@ main_loop (Fep *fep)
 	      uint32_t state;
 	      char *endptr;
 	      bool is_key_read, is_key_handled;
-	      FepCSI *csi;
 
-	      is_key_read = false;
-	      csi = _fep_csi_parse (buf + i, bytes_read - i, &endptr);
-	      if (csi)
+	      is_key_read = _fep_esc_to_key (buf + i, bytes_read - i,
+					     &keyval, &state, &endptr);
+	      if (!is_key_read)
 		{
-		  if (_fep_csi_to_key (csi, &keyval, &state))
-		    is_key_read = true;
-		  _fep_csi_free (csi);
-		}
-	      else
-		{
-		  if (_fep_char_to_key (buf[i], &keyval, &state))
-		    {
-		      endptr = buf + i + 1;
-		      is_key_read = true;
-		    }
+		  is_key_read = _fep_char_to_key (buf[i], &keyval, &state);
+
+		  /* proceed to the next char regardless of is_key_read */
+		  endptr = buf + i + 1;
 		}
 
 	      is_key_handled = false;

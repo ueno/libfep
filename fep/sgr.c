@@ -170,7 +170,7 @@ _fep_get_sgr_codes (int *sgr_codes)
       FepCSI *csi;
 
       if (str
-	  && (csi = _fep_csi_parse (str, strlen (str), NULL)) != NULL)
+	  && (csi = _fep_csi_parse (str, strlen (str), '\133', NULL)) != NULL)
 	{
 	  if (csi->final == 'm')
 	    {

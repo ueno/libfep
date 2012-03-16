@@ -37,6 +37,7 @@
 #include "private.h"
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include <errno.h>
 #include <assert.h>
 
@@ -176,12 +177,11 @@ _fep_get_state_from_cursor (FepCSI *csi)
   return state;
 }
 
-bool
-_fep_csi_to_key (FepCSI   *csi,
-                 uint32_t *r_key,
-                 uint32_t *r_state)
+static bool
+_fep_csi_to_cursor_key (FepCSI *csi,
+			uint32_t *r_key,
+			uint32_t *r_state)
 {
-  char *csi_str;
   int i;
 
   for (i = 0; i < SIZEOF (cursor_keyvals); i++)
@@ -193,6 +193,19 @@ _fep_csi_to_key (FepCSI   *csi,
 	  return true;
 	}
     }
+  return false;
+}
+
+static bool
+_fep_csi_to_key (FepCSI   *csi,
+                 uint32_t *r_key,
+                 uint32_t *r_state)
+{
+  char *csi_str;
+  int i;
+
+  if (_fep_csi_to_cursor_key (csi, r_key, r_state))
+    return true;
 
   csi_str = _fep_csi_format (csi);
   for (i = 0; i < SIZEOF (cap_keyvals); i++)
@@ -212,5 +225,85 @@ _fep_csi_to_key (FepCSI   *csi,
 
   *r_key = 0;
   *r_state = 0;
+  return false;
+}
+
+bool
+_fep_esc_to_key (const char *str,
+		 size_t len,
+		 uint32_t *r_key,
+                 uint32_t *r_state,
+		 char **r_endptr)
+{
+  FepCSI *csi;
+  bool retval = false;
+  uint32_t key, state;
+  char *endptr;
+
+  csi = _fep_csi_parse (str, len, 'O', &endptr);
+  if (csi)
+    {
+      switch (csi->final)
+	{
+	case 'A': /* Esc O A == Up on VT100/VT320/xterm. */
+	case 'B': /* Esc O B == Down on
+		   * VT100/VT320/xterm. */
+	case 'C': /* Esc O C == Right on
+		   * VT100/VT320/xterm. */
+	case 'D': /* Esc O D == Left on
+		   * VT100/VT320/xterm. */
+	  retval = _fep_csi_to_cursor_key (csi, &key, &state);
+	  if (retval)
+	    {
+	      *r_key = key;
+	      *r_state = state;
+	      *r_endptr = endptr;
+	    }
+	default:
+	  break;
+	}
+      _fep_csi_free (csi);
+      return retval;
+    }
+
+  csi = _fep_csi_parse (str, len, 'o', &endptr);
+  if (csi)
+    {
+      switch (csi->final)
+	{
+	case 'a': /* Esc o a == Ctrl-Up on Eterm. */
+	case 'b': /* Esc o b == Ctrl-Down on Eterm. */
+	case 'c': /* Esc o c == Ctrl-Right on Eterm. */
+	case 'd': /* Esc o d == Ctrl-Left on Eterm. */
+	  csi->final = toupper (csi->final);
+	  retval = _fep_csi_to_cursor_key (csi, &key, &state);
+	  if (retval)
+	    {
+	      *r_key = key;
+	      *r_state = state;
+	      *r_endptr = endptr;
+	    }
+	  break;
+	default:
+	  break;
+	}
+      _fep_csi_free (csi);
+      return retval;
+    }
+
+  csi = _fep_csi_parse (str, len, '\133', &endptr);
+  if (csi)
+    {
+      retval = _fep_csi_to_key (csi, &key, &state);
+      if (retval)
+	{
+	  *r_key = key;
+	  *r_state = state;
+	  *r_endptr = endptr;
+	}
+      _fep_csi_free (csi);
+      return retval;
+    }
+
   return false;
 }

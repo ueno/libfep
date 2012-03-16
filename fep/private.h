@@ -141,7 +141,8 @@ bool             _fep_csi_scan             (const char         *str,
                                             size_t             *r_csi_len);
 FepCSI          *_fep_csi_parse            (const char         *str,
                                             size_t              len,
-					    char              **endptr);
+                                            char                introducer,
+                                            char              **endptr);
 char *           _fep_csi_format           (FepCSI             *csi);
 void             _fep_csi_free             (FepCSI             *csi);
 
@@ -160,9 +161,11 @@ void             _fep_sgr_attr_from_attribute
 const char *     _fep_cap_get_string       (const char         *name);
 
 /* key.c */
-bool             _fep_csi_to_key           (FepCSI             *csi,
+bool             _fep_esc_to_key           (const char         *str,
+                                            size_t              len,
                                             uint32_t           *r_key,
-					    uint32_t           *r_state);
+                                            uint32_t           *r_state,
+                                            char              **r_endptr);
 bool             _fep_char_to_key          (char                tty,
                                             uint32_t           *r_key,
                                             uint32_t           *r_state);

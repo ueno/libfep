@@ -124,7 +124,7 @@ _fep_output_string_from_pty (Fep *fep, const char *str, int str_len)
       while (_fep_csi_scan (p, str_len, 'm', &sgr, &sgr_len))
 	{
 	  FepCSI *csi;
-	  csi = _fep_csi_parse (sgr, sgr_len, NULL);
+	  csi = _fep_csi_parse (sgr, sgr_len, '\133', NULL);
 	  if (csi)
 	    {
 	      char **params = _fep_strsplit (csi->params, ";", -1), c;

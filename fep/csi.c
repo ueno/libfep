@@ -86,12 +86,13 @@ _fep_csi_scan (const char *str,
 FepCSI *
 _fep_csi_parse (const char *str,
                 size_t      len,
+                char        introducer,
                 char      **r_endptr)
 {
   const char *p, *start;
   FepCSI csi, *r_csi;
 
-  if (len < 3 || strncmp (str, "\033\133", 2) != 0)
+  if (len < 3 || *str != '\033' || *(str + 1) != introducer)
     return NULL;
 
   /* P */
