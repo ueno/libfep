@@ -60,6 +60,8 @@ struct CursorKeyvalEntry
     { 'B', FEP_Down },
     { 'C', FEP_Right },
     { 'D', FEP_Left },
+    { 'F', FEP_End },
+    { 'H', FEP_Home },
   };
 
 struct CapKeyvalEntry
@@ -252,6 +254,8 @@ _fep_esc_to_key (const char *str,
 		   * VT100/VT320/xterm. */
 	case 'D': /* Esc O D == Left on
 		   * VT100/VT320/xterm. */
+	case 'F': /* Esc O F == End on xterm. */
+	case 'H': /* Esc O H == Home on xterm. */
 	  retval = _fep_csi_to_cursor_key (csi, &key, &state);
 	  if (retval)
 	    {
