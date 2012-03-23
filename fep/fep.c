@@ -285,7 +285,15 @@ fep_run (Fep *fep, const char *command[])
 
       set_signal_handler ();
       retval = main_loop (fep);
-      done (fep, retval < 0 ? 1 : 0);
+
+      /* main_loop has terminated as a result of child's exit */
+      if (retval == 0)
+	{
+	  int status;
+	  waitpid (pid, &status, 0);
+	  done (fep, WEXITSTATUS(status));
+	}
+      done (fep, 1);
     }
   return 0;
 }
