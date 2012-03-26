@@ -75,8 +75,18 @@ find_match_end (const void *haystack, size_t haystacklen,
 static void
 done (Fep *fep, int code)
 {
+  int row = fep->cursor.row;
   _fep_output_change_scroll_region (fep, 0, fep->winsize.ws_row);
+  _fep_output_restore_cursor (fep);
+
+  /* Avoid the last error message being overwritten by the shell
+     output.  Negative cursor position means the last output is pty
+     string (see _fep_output_string_from_pty). */
+  if (row < 0)
+    putchar ('\n');
+
   tcsetattr (fep->tty_in, TCSAFLUSH, &fep->orig_termios);
+  
   fep_free (fep);
   exit (code);
 }
