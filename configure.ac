@@ -17,7 +17,7 @@
 AC_PREREQ(2.63)
 AC_CONFIG_MACRO_DIR([m4])
 
-AC_INIT([libfep], [0.0.6], [ueno@unixuser.org])
+AC_INIT([libfep], [0.0.7], [ueno@unixuser.org])
 
 FEP_API_VERSION=1.0
 FEP_API_MAJOR_VERSION=1
