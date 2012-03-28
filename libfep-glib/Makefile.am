@@ -48,7 +48,7 @@ fepgenumtypes.h: $(libfepglib_public_headers) fepgenumtypes.h.template
 		$(libfepglib_public_headers) > fepgenumtypes.h.tmp && \
 		mv fepgenumtypes.h.tmp fepgenumtypes.h
 
-fepgenumtypes.c: $(libfepglib_public_headers) fepgenumtypes.c.template
+fepgenumtypes.c: $(libfepglib_public_headers) fepgenumtypes.c.template fepgenumtypes.h
 	$(AM_V_GEN) $(GLIB_MKENUMS) --template fepgenumtypes.c.template \
 		$(libfepglib_public_headers) > fepgenumtypes.c.tmp && \
 		mv fepgenumtypes.c.tmp fepgenumtypes.c
