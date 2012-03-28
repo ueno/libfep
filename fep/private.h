@@ -199,6 +199,8 @@ void             _fep_output_string_from_pty
 void             _fep_output_cursor_text   (Fep                *fep,
                                             const char         *text,
 					    FepAttribute       *attr);
+void             _fep_output_restore_cursor
+                                           (Fep                *fep);
 void             _fep_output_status_text   (Fep                *fep,
                                             const char         *text,
 					    FepAttribute       *attr);
