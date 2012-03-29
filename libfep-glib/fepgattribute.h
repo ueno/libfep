@@ -72,7 +72,7 @@ typedef enum
  * @start_index: starting position of the attribute
  * @end_index: end position (exclusive) of the attribute
  */
-struct FepGAttribute
+struct _FepGAttribute
 {
   /*< public >*/
   FepGAttrType type;
@@ -81,7 +81,7 @@ struct FepGAttribute
   guint end_index;
 };
 
-typedef struct FepGAttribute FepGAttribute;
+typedef struct _FepGAttribute FepGAttribute;
 
 #define FEP_TYPE_G_ATTRIBUTE fep_g_attribute_get_type ();
 
