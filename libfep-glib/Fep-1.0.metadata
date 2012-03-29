@@ -1,2 +1,3 @@
 Fep cheader_filename="libfep-glib/libfep-glib.h"
+GAttribute skip
 

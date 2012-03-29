@@ -94,7 +94,10 @@ AM_CONDITIONAL([ENABLE_GTK_DOC], false)
 GOBJECT_INTROSPECTION_CHECK([0.9.0])
 
 # check vapigen
-if test "x$found_introspection" = "xyes"; then
+AC_ARG_ENABLE([vapigen],
+	AS_HELP_STRING([--enable-vapigen], [Enable vapi generation]),
+	[enable_vapigen=$enableval], [enable_vapigen=auto])
+if test "x$found_introspection" = "xyes" -a "x$enable_vapigen" != "xno"; then
   AC_PATH_PROG([VAPIGEN], [vapigen], [false])
   if test "x$VAPIGEN" != "xfalse"; then
     enable_vapigen=yes

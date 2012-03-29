@@ -93,10 +93,11 @@ dist_vapi_DATA = libfep-glib.vapi libfep-glib.deps
 
 if ENABLE_VAPIGEN
 libfep-glib.vapi: Fep@FEP_LIBRARY_SUFFIX@.metadata Fep@FEP_LIBRARY_SUFFIX@-custom.vala | Fep@FEP_LIBRARY_SUFFIX@.gir
-	$(VAPIGEN) --pkg=gio-2.0 --library libfep-glib Fep-1.0.gir Fep-1.0-custom.vala
+	$(VAPIGEN) --pkg=gio-2.0 --library=libfep-glib --metadatadir=$(srcdir) Fep-1.0.gir $(srcdir)/Fep-1.0-custom.vala
 endif
 
-MAINTAINERCLEANFILES += libfep-glib.vapi
+BUILT_SOURCES = libfep-glib.vapi
+MAINTAINERCLEANFILES += $(BUILT_SOURCES)
 EXTRA_DIST +=					\
 	Fep@FEP_LIBRARY_SUFFIX@.metadata	\
 	Fep@FEP_LIBRARY_SUFFIX@-custom.vala	\

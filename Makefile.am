@@ -24,7 +24,7 @@ if ENABLE_GTK_DOC
 SUBDIRS += docs
 endif
 
-DISTCHECK_CONFIGURE_FLAGS = --enable-gtk-doc
+DISTCHECK_CONFIGURE_FLAGS = --enable-gtk-doc --disable-vapigen
 
 ACLOCAL_AMFLAGS = -I m4
 EXTRA_DIST = m4/gnulib-cache.m4 git.mk
