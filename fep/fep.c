@@ -401,13 +401,17 @@ main_loop (Fep *fep)
 		  int j;
 
 		  request.command = FEP_CONTROL_KEY_EVENT;
-		  _fep_control_message_alloc_args (&request, 2);
+		  _fep_control_message_alloc_args (&request, 3);
 		  _fep_control_message_write_uint32_arg (&request,
 							 0,
 							 (uint32_t) keyval);
 		  _fep_control_message_write_uint32_arg (&request,
 							 1,
 							 (uint32_t) state);
+		  _fep_control_message_write_string_arg (&request,
+							 2,
+							 buf + i,
+							 endptr - (buf + i));
 		  for (j = 0; j < fep->n_clients; j++)
 		    {
 		      FepControlMessage response;
@@ -418,12 +422,7 @@ main_loop (Fep *fep)
 							   &request,
 							   &response) == 0)
 			{
-			  uint32_t intval;
-			  _fep_control_message_read_uint32_arg (&response,
-								1,
-								&intval);
-			  if (intval > 0)
-			    is_key_handled = true;
+			  is_key_handled = true;
 			  _fep_control_message_free_args (&response);
 			}
 		      FD_CLR (fep->clients[j], &fds);

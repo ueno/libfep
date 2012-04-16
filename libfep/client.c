@@ -291,6 +291,10 @@ command_key_event (FepClient *client,
       intval = client->filter ((FepEvent *) &event, client->filter_data);
       _fep_control_message_write_uint32_arg (response, 1, intval);
     }
+
+  /* If key is not handled, send back the original input to the server. */
+  if (intval == 0)
+    fep_client_send_data (client, request->args[2].str, request->args[2].len);
 }
 
 static void
