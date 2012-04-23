@@ -34,6 +34,12 @@ _fep_string_append (FepString *buf, const char *str, size_t count)
 }
 
 void
+_fep_string_append_c (FepString *buf, char c)
+{
+  _fep_string_append (buf, &c, 1);
+}
+
+void
 _fep_string_clear (FepString *buf)
 {
   buf->len = 0;

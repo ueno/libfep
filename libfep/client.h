@@ -73,23 +73,26 @@ typedef struct _FepEventResize FepEventResize;
 typedef struct _FepClient FepClient;
 typedef int (*FepEventFilter) (FepEvent *event, void *data);
 
-FepClient *fep_client_open             (const char    *address);
-int        fep_client_get_poll_fd      (FepClient     *client);
-void       fep_client_set_cursor_text  (FepClient     *client,
-                                        const char    *text,
-					FepAttribute  *attr);
-void       fep_client_set_status_text  (FepClient     *client,
-                                        const char    *text,
-					FepAttribute  *attr);
-void       fep_client_send_text        (FepClient     *client,
-                                        const char    *text);
-void       fep_client_send_data        (FepClient     *client,
-                                        const char    *data,
-                                        size_t         length);
-void       fep_client_set_event_filter (FepClient     *client,
-                                        FepEventFilter filter,
-                                        void          *data);
-int        fep_client_dispatch         (FepClient     *client);
-void       fep_client_close            (FepClient     *client);
+FepClient *fep_client_open              (const char     *address);
+int        fep_client_get_poll_fd       (FepClient      *client);
+void       fep_client_set_cursor_text   (FepClient      *client,
+                                         const char     *text,
+                                         FepAttribute   *attr);
+void       fep_client_set_status_text   (FepClient      *client,
+                                         const char     *text,
+                                         FepAttribute   *attr);
+void       fep_client_send_text         (FepClient      *client,
+                                         const char     *text);
+void       fep_client_send_data         (FepClient      *client,
+                                         const char     *data,
+                                         size_t          length);
+void       fep_client_forward_key_event (FepClient      *client,
+                                         unsigned int    keyval,
+                                         FepModifierType modifiers);
+void       fep_client_set_event_filter  (FepClient      *client,
+                                         FepEventFilter  filter,
+                                         void           *data);
+int        fep_client_dispatch          (FepClient      *client);
+void       fep_client_close             (FepClient      *client);
 
 #endif	/* __LIBFEP_CLIENT_H__ */

@@ -99,8 +99,8 @@ _fep_char_to_key (char      tty,
   uint32_t key;
   uint32_t state;
 
-  tty &= 0x7f;
   state = (tty & 0x80) ? FEP_META_MASK : 0;
+  tty &= 0x7f;
   switch (tty)
     {
       /* C-space */
@@ -152,6 +152,113 @@ _fep_char_to_key (char      tty,
   *r_state = state;
 
   return key != 0;
+}
+
+char *
+_fep_key_to_string (uint32_t key,
+                    uint32_t state,
+                    size_t  *r_length)
+{
+  FepCSI csi;
+  FepString str;
+  char *p;
+  int i;
+
+  memset (&csi, 0, sizeof (csi));
+  memset (&str, 0, sizeof (str));
+
+  switch (key)
+    {
+      /* cursor */
+    case FEP_Left:
+    case FEP_Up:
+    case FEP_Right:
+    case FEP_Down:
+    case FEP_Delete:
+    case FEP_Home:
+    case FEP_End:
+      for (i = 0; i < SIZEOF (cursor_keyvals); i++)
+	if (cursor_keyvals[i].keyval == key)
+	  {
+	    csi.final = cursor_keyvals[i].final;
+	    break;
+	  }
+      csi.params = "";
+      for (i = 0; i < SIZEOF (cursor_states); i++)
+	if (cursor_states[i].state & state)
+	  {
+	    csi.params = xasprintf ("0;%d", cursor_states[i].param);
+	    break;
+	  }
+      csi.intermediate = "";
+      p = _fep_csi_format (&csi);
+      _fep_string_append (&str, p, strlen (p));
+      free (p);
+      if (*csi.params != '\0')
+	free (csi.params);
+      break;
+
+      /* tty */
+    case 0x20: 
+      if (state & FEP_CONTROL_MASK)
+	_fep_string_append (&str, "\0", 1);
+      else
+	_fep_string_append (&str, "\x20", 1);
+      break;
+    case FEP_Return:
+      _fep_string_append (&str, "\r", 1);
+      break;
+    case FEP_BackSpace:
+      _fep_string_append (&str, "\x7f", 1);
+      break;
+    case FEP_Escape:
+      _fep_string_append (&str, "\033", 1);
+      break;
+    case FEP_Tab:
+      _fep_string_append (&str, "\t", 1);
+      break;
+    default:
+      if (state & FEP_CONTROL_MASK)
+	{
+	  if (key >= 'a' && key <= 'z')
+	    _fep_string_append_c (&str, key - ('a' - 1));
+	  else if (key >= '\\' && key <= '_')
+	    _fep_string_append_c (&str, key - ('A' - 1));
+	  else
+	    fep_log (FEP_LOG_LEVEL_WARNING,
+		     "no tty sequence for key %u modifiers %u",
+		     key,
+		     state);
+	}
+      else if (state & FEP_SHIFT_MASK)
+	{
+	  if (key >= 'a' && key <= 'z')
+	    _fep_string_append_c (&str, 'A' + (key - 'a'));
+	  else
+	    fep_log (FEP_LOG_LEVEL_WARNING,
+		     "no tty sequence for key %u modifiers %u",
+		     key,
+		     state);
+	}
+      else if (key >= 0x21 && key <= 0x7E)
+	_fep_string_append_c (&str, key);
+
+      if (str.len == 0)
+	{
+	  for (i = 0; i < SIZEOF (cap_keyvals); i++)
+	    if (cap_keyvals[i].keyval == key)
+	      {
+		const char *cap_str = _fep_cap_get_string (cap_keyvals[i].name);
+		if (cap_str)
+		  _fep_string_append (&str, cap_str, strlen (cap_str));
+		break;
+	      }
+	}
+      break;
+    }
+
+  *r_length = str.len;
+  return str.str;
 }
 
 static uint32_t

@@ -169,6 +169,9 @@ bool             _fep_esc_to_key           (const char         *str,
 bool             _fep_char_to_key          (char                tty,
                                             uint32_t           *r_key,
                                             uint32_t           *r_state);
+char            *_fep_key_to_string        (uint32_t            key,
+					    uint32_t            state,
+					    size_t  *r_length);
 
 /* input.c */
 ssize_t          _fep_read                 (Fep                *fep,

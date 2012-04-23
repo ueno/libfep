@@ -49,6 +49,9 @@ typedef struct _FepString FepString;
 void    _fep_string_append (FepString  *buf,
                             const char *str,
                             size_t      count);
+void    _fep_string_append_c
+                           (FepString  *buf,
+			    char        c);
 void    _fep_string_clear  (FepString  *buf);
 void    _fep_string_copy   (FepString  *dst,
                             FepString  *src);
@@ -93,11 +96,12 @@ typedef enum
     FEP_CONTROL_SET_STATUS_TEXT = 2,
     FEP_CONTROL_SEND_TEXT = 3,
     FEP_CONTROL_SEND_DATA = 4,
+    FEP_CONTROL_FORWARD_KEY_EVENT = 5,
     /* server to client */
-    FEP_CONTROL_KEY_EVENT = 5,
-    FEP_CONTROL_RESIZE_EVENT = 6,
+    FEP_CONTROL_KEY_EVENT = 6,
+    FEP_CONTROL_RESIZE_EVENT = 7,
     /* response from client */
-    FEP_CONTROL_RESPONSE = 7
+    FEP_CONTROL_RESPONSE = 8
   } FepControlCommand;
 
 struct _FepControlMessage

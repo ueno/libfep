@@ -366,6 +366,23 @@ fep_g_client_send_data (FepGClient *client,
 }
 
 /**
+ * fep_g_client_forward_key_event:
+ * @client: a #FepGClient
+ * @keyval: keysym value
+ * @modifiers: modifiers
+ *
+ * Request to send a key event to the child process of the FEP server.
+ */
+void
+fep_g_client_forward_key_event (FepGClient *client,
+                                guint       keyval,
+                                guint       modifiers)
+{
+  FepGClientPrivate *priv = FEP_G_CLIENT_GET_PRIVATE (client);
+  fep_client_forward_key_event (priv->client, keyval, modifiers);
+}
+
+/**
  * fep_g_client_get_poll_fd:
  * @client: a #FepGClient
  *

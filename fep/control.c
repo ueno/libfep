@@ -179,6 +179,24 @@ command_send_data (Fep *fep,
     }
 }
 
+static void
+command_forward_key_event (Fep *fep,
+			   FepControlMessage *request)
+{
+  uint32_t keyval, modifiers;
+  if (_fep_control_message_read_uint32_arg (request, 0, &keyval) == 0
+      && _fep_control_message_read_uint32_arg (request, 1, &modifiers) == 0)
+    {
+      size_t length;
+      char *data = _fep_key_to_string (keyval, modifiers, &length);
+      if (data)
+	{
+	  _fep_output_send_data (fep, data, length);
+	  free (data);
+	}
+    }
+}
+
 int
 _fep_read_control_message_from_fd (Fep               *fep,
                                    int                fd,
@@ -219,7 +237,8 @@ _fep_dispatch_control_message (Fep *fep, FepControlMessage *message)
 	{ FEP_CONTROL_SET_CURSOR_TEXT, command_set_cursor_text },
 	{ FEP_CONTROL_SET_STATUS_TEXT, command_set_status_text },
 	{ FEP_CONTROL_SEND_TEXT, command_send_text },
-	{ FEP_CONTROL_SEND_DATA, command_send_data }
+	{ FEP_CONTROL_SEND_DATA, command_send_data },
+	{ FEP_CONTROL_FORWARD_KEY_EVENT, command_forward_key_event }
       };
   int i;
 
