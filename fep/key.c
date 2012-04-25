@@ -234,6 +234,8 @@ _fep_key_to_string (uint32_t key,
 	{
 	  if (key >= 'a' && key <= 'z')
 	    _fep_string_append_c (&str, 'A' + (key - 'a'));
+	  else if (key >= 0x21 && key <= 0x7E)
+	    _fep_string_append_c (&str, key);
 	  else
 	    fep_log (FEP_LOG_LEVEL_WARNING,
 		     "no tty sequence for key %u modifiers %u",
