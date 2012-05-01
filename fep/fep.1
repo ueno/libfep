@@ -5,11 +5,14 @@ fep \- FEP server running sub-shell
 .SH SYNOPSIS
 .B fep
 .RI [ options ]
+.RI [ command ]
 .br
 .SH DESCRIPTION
 \fBfep\fP is a shell wrapper with FEP support.  It can be controlled
 by clients (such as fepcli) running inside the sub-shell, through the
 libfep library.
+\fBfep\fP executes the SHELL environment variable. You can specify
+another command as its argument.
 .SH OPTIONS
 The \fBfep\fP command follows the usual GNU command line syntax, with
 long options starting with two dashes (`-').  A summary of options is
@@ -17,9 +20,6 @@ included below.
 .TP
 .B \-h, \-\-help
 Show summary of options.
-.TP
-.B \-e, \-\-executable=\fICOMMAND\fR
-Specify a shell program executed by fep.
 .TP
 .B \-l, \-\-log\-file=\fIFILE\fR
 Specify a log file.
