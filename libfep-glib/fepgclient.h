@@ -20,6 +20,7 @@
 #define __LIBFEP_GOBJECT_FEP_GCLIENT_H__
 
 #include <gio/gio.h>
+#include <libfep-glib/fepgevents.h>
 
 G_BEGIN_DECLS
 
@@ -58,9 +59,11 @@ struct _FepGClientClass {
   void     (*resized)          (FepGClient *client,
                                 guint       cols,
                                 guint       rows);
+  gboolean (*filter_event)     (FepGClient *client,
+                                FepGEvent  *event);
 
   /*< private >*/
-  gpointer padding[32];
+  gpointer padding[31];
 };
 
 GType        fep_g_client_get_type          (void) G_GNUC_CONST;

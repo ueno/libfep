@@ -315,6 +315,8 @@ command_key_event (FepClient *client,
   if (retval == 0 && client->filter)
     {
       event.event.type = FEP_KEY_PRESS;
+      event.source = request->args[2].str;
+      event.source_length = request->args[2].len;
       intval = client->filter ((FepEvent *) &event, client->filter_data);
       _fep_control_message_write_uint32_arg (response, 1, intval);
     }

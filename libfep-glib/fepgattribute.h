@@ -65,6 +65,8 @@ typedef enum
     FEP_G_ATTR_UNDERLINE_ERROR = 4,
   } FepGAttrUnderline;
 
+typedef struct _FepGAttribute FepGAttribute;
+
 /**
  * FepGAttribute:
  * @type: type of the attribute
@@ -80,8 +82,6 @@ struct _FepGAttribute
   guint start_index;
   guint end_index;
 };
-
-typedef struct _FepGAttribute FepGAttribute;
 
 #define FEP_TYPE_G_ATTRIBUTE fep_g_attribute_get_type ();
 

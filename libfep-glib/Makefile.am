@@ -16,7 +16,7 @@
 
 lib_LTLIBRARIES = libfep-glib.la
 
-libfep_glib_la_sources = fepgenumtypes.c fepgattribute.c fepgclient.c
+libfep_glib_la_sources = fepgenumtypes.c fepgattribute.c fepgclient.c fepgevents.c
 libfep_glib_la_SOURCES = fepgmarshalers.c $(libfep_glib_la_sources)
 libfep_glib_la_CFLAGS = $(GIO_CFLAGS) -I$(top_srcdir)
 libfep_glib_la_LIBADD = $(GIO_LIBS) $(top_builddir)/libfep/libfep.la
@@ -28,7 +28,7 @@ libfep_glib_la_LDFLAGS =						\
 	$(NULL)
 
 libfepglibincludedir = $(includedir)/fep-@FEP_API_VERSION@/libfep-glib
-libfepglib_public_headers = libfep-glib.h fepgattribute.h fepgclient.h
+libfepglib_public_headers = libfep-glib.h fepgattribute.h fepgclient.h fepgevents.h
 libfepglibinclude_HEADERS = fepgenumtypes.h $(libfepglib_public_headers)
 noinst_HEADERS = fepgmarshalers.h
 

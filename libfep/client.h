@@ -47,12 +47,16 @@ typedef struct _FepEvent FepEvent;
  * @event: base event struct
  * @keyval: keysym value
  * @modifiers: modifier mask
+ * @source: original string which generated the event
+ * @source_length: length of @source
  */
 struct _FepEventKey
 {
   FepEvent event;
   unsigned int keyval;
   FepModifierType modifiers;
+  char *source;
+  size_t source_length;
 };
 typedef struct _FepEventKey FepEventKey;
 

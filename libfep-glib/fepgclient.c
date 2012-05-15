@@ -39,6 +39,7 @@ enum
   {
     FILTER_KEY_EVENT_SIGNAL,
     RESIZED_SIGNAL,
+    FILTER_EVENT_SIGNAL,
     LAST_SIGNAL
   };
 
@@ -66,25 +67,25 @@ event_filter (FepEvent *event,
 {
   FepGClient *client = FEP_G_CLIENT (data);
   gboolean retval = FALSE;
+  FepGEvent *gevent = fep_g_event_copy ((FepGEvent *) event);
 
-  switch (event->type)
+  g_signal_emit (client, signals[FILTER_EVENT_SIGNAL], 0, gevent, &retval);
+
+  if (!retval)
     {
-    case FEP_KEY_PRESS:
-      {
-	FepEventKey *_event = (FepEventKey *)event;
-	g_signal_emit (client, signals[FILTER_KEY_EVENT_SIGNAL], 0,
-		       _event->keyval, _event->modifiers, &retval);
-      }
-      break;
-    case FEP_RESIZED:
-      {
-	FepEventResize *_event = (FepEventResize *)event;
-	g_signal_emit (client, signals[RESIZED_SIGNAL], 0,
-		       _event->cols, _event->rows);
-      }
-      break;
-    default:
-      break;
+      switch (event->type)
+	{
+	case FEP_KEY_PRESS:
+	  g_signal_emit (client, signals[FILTER_KEY_EVENT_SIGNAL], 0,
+			 gevent->key.keyval, gevent->key.modifiers, &retval);
+	  break;
+	case FEP_RESIZED:
+	  g_signal_emit (client, signals[RESIZED_SIGNAL], 0,
+			 gevent->resize.cols, gevent->resize.rows);
+	  break;
+	default:
+	  break;
+	}
     }
   return retval ? 1 : 0;
 }
@@ -133,6 +134,14 @@ fep_g_client_real_resized (FepGClient *client,
 			   guint       rows)
 {
   /* g_debug ("%u %u", cols, rows); */
+}
+
+static gboolean
+fep_g_client_real_filter_event (FepGClient *client,
+				FepGEvent *event)
+{
+  /* g_debug ("%u", event->any.type); */
+  return FALSE;
 }
 
 static void
@@ -203,6 +212,7 @@ fep_g_client_class_init (FepGClientClass *klass)
 
   klass->filter_key_event = fep_g_client_real_filter_key_event;
   klass->resized = fep_g_client_real_resized;
+  klass->filter_event = fep_g_client_real_filter_event;
 
   gobject_class->set_property = fep_g_client_set_property;
   gobject_class->get_property = fep_g_client_get_property;
@@ -213,6 +223,8 @@ fep_g_client_class_init (FepGClientClass *klass)
    * @client: a #FepGClient
    * @keyval: a keyval
    * @modifiers: modifier mask
+   * @source: original string which generated the event
+   * @source_length: length of @source
    *
    * The ::filter-key-event signal is emitted when key event is dispatched.
    */
@@ -249,6 +261,25 @@ fep_g_client_class_init (FepGClientClass *klass)
 		  2,
 		  G_TYPE_UINT,
 		  G_TYPE_UINT);
+
+  /**
+   * FepGClient::filter-event:
+   * @client: a #FepGClient
+   * @event: a #FepGEvent
+   *
+   * The ::filter-event signal is emitted when key event is dispatched.
+   */
+  signals[FILTER_EVENT_SIGNAL] =
+    g_signal_new (I_("filter-event"),
+		  G_TYPE_FROM_CLASS(gobject_class),
+		  G_SIGNAL_RUN_LAST,
+		  G_STRUCT_OFFSET(FepGClientClass, filter_event),
+		  g_signal_accumulator_true_handled,
+		  NULL,
+		  _fep_g_marshal_BOOLEAN__POINTER,
+		  G_TYPE_BOOLEAN,
+		  1,
+		  G_TYPE_POINTER);
 
   pspec = g_param_spec_string ("address",
 			       "address",

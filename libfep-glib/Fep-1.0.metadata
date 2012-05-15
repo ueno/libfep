@@ -1,3 +1,5 @@
 Fep cheader_filename="libfep-glib/libfep-glib.h"
-GAttribute skip
+
+GAttribute struct
+GClient.filter_event.event type="GEvent"
 
