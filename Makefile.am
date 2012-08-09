@@ -60,7 +60,11 @@ MAINTAINERCLEANFILES =				\
 ChangeLog:
 	@echo Creating $@
 	@if test -d "$(srcdir)/.git"; then \
-	  $(top_srcdir)/gitlog-to-changelog > $@
+	  GIT_DIR=$(top_srcdir)/.git $(top_srcdir)/gitlog-to-changelog > $@.tmp \
+	  && mv -f $@.tmp $@ \
+	  || ($(RM) $@.tmp; \
+	      echo Failed to generate ChangeLog, your ChangeLog may be outdated >&2; \
+	      (test -f $@ || echo git-log is required to generate this file >> $@)); \
 	else \
 	  test -f $@ || \
 	  (echo A git checkout and git-log is required to generate ChangeLog >&2 && \
