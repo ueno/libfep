@@ -32,7 +32,8 @@ gnulib-tool --libtool --quiet --import \
     xalloc \
     xvasprintf \
     xstrndup \
-    minmax || exit 1
+    minmax \
+    gitlog-to-changelog || exit 1
 
 gtkdocize || exit 1
 
