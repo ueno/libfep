@@ -152,7 +152,7 @@ _fep_read_control_message (int fd,
 		   fd, errno != 0 ? strerror (errno) : "too short");
 	  return -1;
 	}
-      len = *(uint32_t *) buf;
+      len = (buf[3] << 24) | (buf[2] << 16) | (buf[1] << 8) | buf[0];
 #ifdef WORDS_BIGENDIAN
       len = bswap_32 (len);
 #endif
