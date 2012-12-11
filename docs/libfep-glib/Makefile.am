@@ -1,5 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 
+AM_CPPFLAGS = -include $(top_builddir)/config.h
+
 # We require automake 1.6 at least.
 AUTOMAKE_OPTIONS = 1.6
 
