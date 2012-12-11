@@ -16,7 +16,7 @@
 
 bin_PROGRAMS = fep
 
-INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/fep -I$(top_srcdir)/lib
+AM_CPPFLAGS = -I$(top_srcdir) -I$(top_srcdir)/fep -I$(top_srcdir)/lib
 
 fep_SOURCES =					\
 	csi.c					\
