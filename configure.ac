@@ -36,6 +36,7 @@ dnl Init automake
 AM_INIT_AUTOMAKE([color-tests])
 AM_MAINTAINER_MODE([enable])
 AC_GNU_SOURCE
+AM_SILENT_RULES([no])
 
 dnl Check for programs
 AC_PROG_CC
@@ -94,17 +95,7 @@ AM_CONDITIONAL([ENABLE_GTK_DOC], false)
 GOBJECT_INTROSPECTION_CHECK([0.9.0])
 
 # check vapigen
-AC_ARG_ENABLE([vapigen],
-	AS_HELP_STRING([--enable-vapigen], [Enable vapi generation]),
-	[enable_vapigen=$enableval], [enable_vapigen=auto])
-if test "x$found_introspection" = "xyes" -a "x$enable_vapigen" != "xno"; then
-  AC_PATH_PROG([VAPIGEN], [vapigen], [false])
-  if test "x$VAPIGEN" != "xfalse"; then
-    enable_vapigen=yes
-  fi
-  AC_SUBST(VAPIGEN)
-fi
-AM_CONDITIONAL(ENABLE_VAPIGEN, [test "x$enable_vapigen" = "xyes"])
+VAPIGEN_CHECK
 
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile

@@ -88,19 +88,22 @@ typelib_DATA = $(INTROSPECTION_GIRS:.gir=.typelib)
 CLEANFILES += $(gir_DATA) $(typelib_DATA)
 endif
 
-vapidir = $(datadir)/vala/vapi
-dist_vapi_DATA = libfep-glib.vapi libfep-glib.deps
-
 if ENABLE_VAPIGEN
-libfep-glib.vapi: Fep@FEP_LIBRARY_SUFFIX@.metadata Fep@FEP_LIBRARY_SUFFIX@-custom.vala | Fep@FEP_LIBRARY_SUFFIX@.gir
-	$(VAPIGEN) --pkg=gio-2.0 --library=libfep-glib --metadatadir=$(srcdir) Fep-1.0.gir $(srcdir)/Fep-1.0-custom.vala
-endif
+-include $(VAPIGEN_MAKEFILE)
 
-BUILT_SOURCES = libfep-glib.vapi
-MAINTAINERCLEANFILES += $(BUILT_SOURCES)
-EXTRA_DIST +=					\
-	Fep@FEP_LIBRARY_SUFFIX@.metadata	\
-	Fep@FEP_LIBRARY_SUFFIX@-custom.vala	\
-	$(NULL)
+libfep-glib.vapi: Fep-1.0.gir Fep-1.0-custom.vala libfep-glib.deps
+
+VAPIGEN_VAPIS = libfep-glib.vapi
+
+libfep_glib_vapi_DEPS = gio-2.0
+libfep_glib_vapi_METADATADIRS = $(srcdir)
+libfep_glib_vapi_FILES = Fep-1.0.gir $(srcdir)/Fep-1.0-custom.vala
+
+vapidir = $(datadir)/vala/vapi
+vapi_DATA = $(VAPIGEN_VAPIS) $(VAPIGEN_VAPIS:.vapi=.deps)
+
+DISTCLEANFILES += $(VAPIGEN_VAPIS)
+EXTRA_DIST += Fep-1.0.metadata libfep-glib.deps Fep-1.0-custom.vala
+endif
 
 -include $(top_srcdir)/git.mk

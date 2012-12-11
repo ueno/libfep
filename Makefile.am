@@ -41,10 +41,10 @@ GITIGNOREFILES =				\
 	ltmain.sh				\
 	missing					\
 	mkinstalldirs				\
-	m4					\
 	lib					\
 	snippet					\
 	gtk-doc.make				\
+	`find "m4" -type f -name "*.m4" ! -name "vapigen.m4" -print` \
 	$(top_builddir)/lcov.html/*		\
 	$(NULL)
 
