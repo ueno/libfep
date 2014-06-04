@@ -90,14 +90,8 @@ fep_client_open (const char *address)
   memset (&sun, 0, sizeof(struct sockaddr_un));
   sun.sun_family = AF_UNIX;
 
-#ifdef __linux__
-  sun.sun_path[0] = '\0';
-  memcpy (sun.sun_path + 1, address, strlen (address));
-  sun_len = offsetof (struct sockaddr_un, sun_path) + strlen (address) + 1;
-#else
   memcpy (sun.sun_path, address, strlen (address));
   sun_len = sizeof (struct sockaddr_un);
-#endif
 
   client->control = socket (AF_UNIX, SOCK_STREAM, 0);
   if (client->control < 0)

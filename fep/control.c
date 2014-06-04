@@ -97,15 +97,8 @@ _fep_open_control_socket (Fep *fep)
   memset (&sun, 0, sizeof(sun));
   sun.sun_family = AF_UNIX;
 
-#ifdef __linux__
-  sun.sun_path[0] = '\0';
-  memcpy (sun.sun_path + 1, path, strlen (path));
-  sun_len = offsetof (struct sockaddr_un, sun_path) + strlen (path) + 1;
-  remove_control_socket (path);
-#else
   memcpy (sun.sun_path, path, strlen (path));
   sun_len = sizeof (struct sockaddr_un);
-#endif
 
   if (bind (fd, (const struct sockaddr *) &sun, sun_len) < 0)
     {
