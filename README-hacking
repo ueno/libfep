@@ -1,0 +1,8 @@
+To build from the Git repository, do:
+
+  $ git clone git://github.com/ueno/libfep.git
+  $ cd libfep
+  $ ./bootstrap
+  $ ./configure
+  $ make
+  $ make install

@@ -26,8 +26,32 @@ endif
 
 DISTCHECK_CONFIGURE_FLAGS = --enable-gtk-doc --disable-vapigen
 
+BUILT_SOURCES = $(top_srcdir)/.version
+
 ACLOCAL_AMFLAGS = -I m4
-EXTRA_DIST = m4/gnulib-cache.m4 git.mk
+EXTRA_DIST = m4/gnulib-cache.m4 git.mk bootstrap bootstrap.conf $(BUILT_SOURCES)
+
+$(top_srcdir)/.version:
+	echo $(VERSION) > $@-t && mv $@-t $@
+
+# Arrange so that .tarball-version appears only in the distribution
+# tarball, and never in a checked-out repository.
+# The perl substitution is to change some key uses of "rm" to "/bin/rm".
+# See the rm_subst comment for details.
+dist-hook: gen-ChangeLog
+	$(AM_V_GEN)echo $(VERSION) > $(distdir)/.tarball-version
+	$(AM_V_at)perl -pi -e '$(rm_subst)' $(distdir)/Makefile.in
+
+gen_start_date = 2014-04-12
+.PHONY: gen-ChangeLog
+gen-ChangeLog:
+	$(AM_V_GEN)if test -d .git; then				\
+	  $(top_srcdir)/build-aux/gitlog-to-changelog			\
+	    --amend=$(srcdir)/build-aux/git-log-fix			\
+	    --since=$(gen_start_date) > $(distdir)/cl-t;		\
+	  rm -f $(distdir)/ChangeLog;					\
+	  mv $(distdir)/cl-t $(distdir)/ChangeLog;			\
+	fi
 
 GITIGNOREFILES =				\
 	INSTALL					\

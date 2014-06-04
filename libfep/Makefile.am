@@ -24,7 +24,7 @@ libfep_la_LDFLAGS =							\
 	$(NULL)
 
 libfep_la_SOURCES = string.c list.c control.c client.c logger.c
-libfep_la_LIBADD = $(top_builddir)/lib/libgnu.la
+libfep_la_LIBADD = $(top_builddir)/lib/liblibfep.la
 
 libfepincludedir = $(includedir)/fep-@FEP_API_VERSION@/libfep
 libfepinclude_HEADERS = libfep.h keydefs.h client.h logger.h attribute.h

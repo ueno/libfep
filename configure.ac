@@ -15,9 +15,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 AC_PREREQ(2.63)
-AC_CONFIG_MACRO_DIR([m4])
 
-AC_INIT([libfep], [0.0.9], [ueno@unixuser.org])
+AC_INIT([libfep],
+	m4_esyscmd([build-aux/git-version-gen --prefix '' .tarball-version]),
+	[ueno@unixuser.org])
+
+AC_CONFIG_MACRO_DIR([m4])
+AC_CONFIG_AUX_DIR([build-aux])
 
 FEP_API_VERSION=1.0
 FEP_API_MAJOR_VERSION=1
