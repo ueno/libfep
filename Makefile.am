@@ -29,7 +29,7 @@ DISTCHECK_CONFIGURE_FLAGS = --enable-gtk-doc --disable-vapigen
 BUILT_SOURCES = $(top_srcdir)/.version
 
 ACLOCAL_AMFLAGS = -I m4
-EXTRA_DIST = m4/gnulib-cache.m4 git.mk bootstrap bootstrap.conf $(BUILT_SOURCES)
+EXTRA_DIST = m4/gnulib-cache.m4 bootstrap bootstrap.conf $(BUILT_SOURCES)
 
 $(top_srcdir)/.version:
 	echo $(VERSION) > $@-t && mv $@-t $@
